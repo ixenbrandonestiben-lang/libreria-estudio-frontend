@@ -46,6 +46,7 @@ function bootstrap() {
     case 'login':
     case 'register':
     case 'forgot-password':
+    case 'reset-password':
       initAuthController(page);
       break;
     case 'account':
