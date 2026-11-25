@@ -94,3 +94,268 @@ describe('formatters.js', () => {
     assert.equal(truncateText(null, 10), '');
   });
 });
+
+function withDomMocks(fn) {
+  const prevWindow = globalThis.window;
+  const prevDocument = globalThis.document;
+  const prevNode = globalThis.Node;
+  const prevFetch = globalThis.fetch;
+
+  class MockNode {}
+  function makeEl(tag) {
+    const el = new MockNode();
+    el.tagName = tag.toUpperCase();
+    el.children = [];
+    el.attrs = {};
+    el.dataset = {};
+    el.listeners = {};
+    el.className = '';
+    el.textContent = '';
+    el.value = '';
+    el.checked = false;
+    el.disabled = false;
+    el.classList = { add() {}, remove() {}, toggle() {} };
+    el.setAttribute = (k, v) => {
+      el.attrs[k] = v;
+      if (k === 'value') el.value = v;
+      if (k === 'checked') el.checked = true;
+      if (k === 'disabled') el.disabled = true;
+    };
+    el.getAttribute = (k) => el.attrs[k];
+    el.addEventListener = (ev, cb) => {
+      (el.listeners[ev] ||= []).push(cb);
+    };
+    el.appendChild = (c) => {
+      el.children.push(c);
+      return c;
+    };
+    el.removeChild = (c) => {
+      const idx = el.children.indexOf(c);
+      if (idx >= 0) el.children.splice(idx, 1);
+    };
+    Object.defineProperty(el, 'firstChild', {
+      get() {
+        return el.children[0] || null;
+      },
+    });
+    el.contains = () => false;
+    return el;
+  }
+
+  const storage = {};
+  globalThis.Node = MockNode;
+  globalThis.window = {
+    location: { pathname: '/src/pages/list-builder.html', search: '', origin: 'http://localhost:8080' },
+    localStorage: {
+      getItem: (k) => (k in storage ? storage[k] : null),
+      setItem: (k, v) => {
+        storage[k] = String(v);
+      },
+      removeItem: (k) => {
+        delete storage[k];
+      },
+    },
+    addEventListener() {},
+  };
+  globalThis.document = {
+    body: { dataset: { page: 'list-builder' } },
+    createElement: makeEl,
+    createTextNode: (t) => {
+      const n = new MockNode();
+      n.textContent = String(t);
+      return n;
+    },
+    addEventListener() {},
+  };
+
+  return Promise.resolve()
+    .then(() => fn({ makeEl }))
+    .finally(() => {
+      globalThis.window = prevWindow;
+      globalThis.document = prevDocument;
+      globalThis.Node = prevNode;
+      globalThis.fetch = prevFetch;
+    });
+}
+
+describe('schoolListService & SchoolListItemRow regression', () => {
+  it('sends rawText to /school-lists/quote and normalizes backend items including not_found', async () => {
+    await withDomMocks(async () => {
+      let sentBody = null;
+      globalThis.fetch = async (_url, opts) => {
+        sentBody = JSON.parse(opts.body);
+        return {
+          ok: true,
+          status: 200,
+          headers: { get: () => null },
+          json: async () => ({
+            success: true,
+            data: {
+              items: [
+                {
+                  requestedLine: '2 Cuadernos A4',
+                  quantity: 2,
+                  matchStatus: 'exact_match',
+                  selectedProduct: {
+                    id: 1,
+                    title: 'Cuaderno Norma',
+                    brand_name: 'Norma',
+                    category_slug: 'cuadernos-y-papel',
+                    price: '4.50',
+                    stock_available: 100,
+                    image_url: '/assets/images/products/placeholder-product.webp',
+                  },
+                  alternativeProducts: [
+                    {
+                      id: 2,
+                      title: 'Cuaderno Scribe',
+                      brand_name: 'Scribe',
+                      category_slug: 'cuadernos-y-papel',
+                      price: '3.80',
+                      stock_available: 50,
+                    },
+                  ],
+                },
+                {
+                  requestedLine: '1 Producto inexistente',
+                  quantity: 1,
+                  matchStatus: 'not_found',
+                  selectedProduct: null,
+                  alternativeProducts: [],
+                },
+              ],
+            },
+          }),
+        };
+      };
+
+      const { schoolListService } = await import('../src/services/schoolListService.js');
+      const { createSchoolListItemRow } = await import('../src/components/SchoolListItemRow.js');
+
+      const res = await schoolListService.quoteRawText('2 Cuadernos A4\n1 Producto inexistente');
+      assert.equal(sentBody.rawText, '2 Cuadernos A4\n1 Producto inexistente');
+      assert.equal(res.success, true);
+      assert.equal(res.data.items.length, 2);
+      assert.equal(res.data.items[0].selectedProduct.name, 'Cuaderno Norma');
+      assert.equal(res.data.items[0].alternatives.length, 2);
+      assert.equal(res.data.items[1].selectedProduct, null);
+      assert.equal(res.data.items[1].included, false);
+
+      // Should render both matched and not_found rows without throwing
+      assert.doesNotThrow(() => {
+        for (const row of res.data.items) {
+          createSchoolListItemRow(row, {
+            onToggle() {},
+            onChangeProduct() {},
+            onChangeQty() {},
+          });
+        }
+      });
+    });
+  });
+
+  it('local fallback parses numbering, accents, plurals, and trailing quantities accurately', async () => {
+    await withDomMocks(async () => {
+      globalThis.fetch = async () => {
+        throw new Error('offline');
+      };
+      const { schoolListService } = await import('../src/services/schoolListService.js');
+      const res = await schoolListService.quoteRawText(
+        '1. 2x lapices de colores\nCuaderno profesional x3'
+      );
+      assert.equal(res.data.items[0].qty, 2);
+      assert.match(res.data.items[0].selectedProduct.name, /Lápices de Color/i);
+      assert.equal(res.data.items[1].qty, 3);
+      assert.match(res.data.items[1].selectedProduct.name, /Cuaderno/i);
+    });
+  });
+});
+
+describe('API contracts, Navbar, and Cart regression', () => {
+  it('Navbar renders safely with backend user payload containing fullName instead of name', async () => {
+    await withDomMocks(async ({ makeEl }) => {
+      const { appStore } = await import('../src/state/appStore.js');
+      const { mountNavbar } = await import('../src/components/Navbar.js');
+      appStore.setAuth({ id: 1, fullName: 'Ana Pérez', email: 'ana@test.com', role: 'customer' }, 'tok');
+      assert.doesNotThrow(() => {
+        mountNavbar(makeEl('header'));
+      });
+      appStore.setAuth(null, null);
+    });
+  });
+
+  it('productService maps sort/level and unwraps backend array response', async () => {
+    await withDomMocks(async () => {
+      let calledUrl = '';
+      globalThis.fetch = async (url) => {
+        calledUrl = url;
+        return {
+          ok: true,
+          status: 200,
+          headers: { get: () => null },
+          json: async () => ({
+            success: true,
+            data: [
+              {
+                id: 1,
+                sku: 'SKU-1',
+                title: 'Cuaderno Norma',
+                brand_name: 'Norma',
+                category_slug: 'cuadernos-y-papel',
+                price: '4.50',
+                stock_available: 12,
+                image_url: '/assets/images/products/placeholder-product.webp',
+                attributes: [{ key: 'education_level', value: 'primaria', label: 'Primaria' }],
+              },
+            ],
+            meta: { page: 1, limit: 8, total: 1, totalPages: 1 },
+          }),
+        };
+      };
+
+      const { productService } = await import('../src/services/productService.js');
+      const res = await productService.getProducts({ sort: 'featured', level: 'Primaria', page: 1, limit: 8 });
+      assert.match(calledUrl, /http:\/\/localhost:3000\/api\/v1\/products/);
+      assert.match(calledUrl, /sort=newest/);
+      assert.match(calledUrl, /education_level=primaria/);
+      assert.equal(res.data.items.length, 1);
+      assert.equal(res.data.items[0].name, 'Cuaderno Norma');
+      assert.equal(res.data.items[0].image, 'src/assets/images/products/cuaderno.svg');
+      assert.equal(res.data.pagination.total, 1);
+    });
+  });
+
+  it('appStore.addToCart refuses out-of-stock products (stock === 0)', async () => {
+    await withDomMocks(async () => {
+      const { appStore } = await import('../src/state/appStore.js');
+      appStore.clearCart();
+      const added = appStore.addToCart({ id: 99, name: 'Agotado', price: 10, stock: 0 }, 1);
+      assert.equal(added, false);
+      assert.equal(appStore.getState().cart.length, 0);
+    });
+  });
+
+  it('orderService.trackOrder sends orderNumber parameter to backend', async () => {
+    await withDomMocks(async () => {
+      let calledUrl = '';
+      globalThis.fetch = async (url) => {
+        calledUrl = url;
+        return {
+          ok: true,
+          status: 200,
+          headers: { get: () => null },
+          json: async () => ({
+            success: true,
+            data: { order_number: 'LE-2026-0001', status: 'shipped', total_amount: '50.00', created_at: '2026-11-01T00:00:00Z' },
+          }),
+        };
+      };
+      const { orderService } = await import('../src/services/orderService.js');
+      const res = await orderService.trackOrder('LE-2026-0001', 'test@ejemplo.com');
+      assert.match(calledUrl, /orderNumber=LE-2026-0001/);
+      assert.equal(res.success, true);
+      assert.equal(res.data.id, 'LE-2026-0001');
+      assert.equal(res.data.total, 50);
+    });
+  });
+});

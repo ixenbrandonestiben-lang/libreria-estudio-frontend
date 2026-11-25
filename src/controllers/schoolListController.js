@@ -22,9 +22,22 @@ export function initSchoolListController() {
     clearElement(rowsRoot);
     let total = 0;
 
+    if (currentRows.length === 0) {
+      rowsRoot.appendChild(
+        createElement('div', { className: 'card' }, [
+          createElement('p', {
+            className: 'text-sm text-muted',
+            text: 'No se detectaron artículos válidos en tu lista. Escribe un artículo por línea.',
+          }),
+        ])
+      );
+      setSafeText(totalEl, formatCurrency(0));
+      return;
+    }
+
     for (const row of currentRows) {
-      if (row.included) {
-        total += row.selectedProduct.price * row.qty;
+      if (row.included && row.selectedProduct) {
+        total += Number(row.selectedProduct.price || 0) * Number(row.qty || 1);
       }
 
       const rowNode = createSchoolListItemRow(row, {
@@ -33,10 +46,20 @@ export function initSchoolListController() {
           renderRows();
         },
         onChangeProduct: (id, productId) => {
-          const found = DEMO_PRODUCTS.find((p) => p.id === productId);
+          const targetRow = currentRows.find((r) => r.id === id);
+          const found =
+            targetRow?.alternatives?.find((p) => String(p.id) === String(productId)) ||
+            DEMO_PRODUCTS.find((p) => String(p.id) === String(productId));
           if (!found) return;
           currentRows = currentRows.map((r) =>
-            r.id === id ? { ...r, selectedProduct: found } : r
+            r.id === id
+              ? {
+                  ...r,
+                  selectedProduct: found,
+                  matchStatus: Number(found.stock) > 0 ? 'exact_match' : 'out_of_stock',
+                  included: Number(found.stock) > 0,
+                }
+              : r
           );
           renderRows();
         },
@@ -78,26 +101,65 @@ export function initSchoolListController() {
         appStore.showToast('Pega al menos un útil escolar para cotizar.', 'warning');
         return;
       }
-      const res = await schoolListService.quoteRawText(text);
-      if (res.success && res.data?.items) {
-        currentRows = res.data.items;
-        renderRows();
-        appStore.showToast('Lista cotizada correctamente.', 'success');
+
+      quoteBtn.disabled = true;
+      try {
+        const res = await schoolListService.quoteRawText(text);
+        if (res.success && Array.isArray(res.data?.items)) {
+          currentRows = res.data.items;
+          renderRows();
+          appStore.showToast('Lista cotizada correctamente.', 'success');
+        } else {
+          appStore.showToast(
+            res.message || 'No se pudo cotizar la lista escolar.',
+            'danger'
+          );
+        }
+      } finally {
+        quoteBtn.disabled = false;
       }
     });
   }
 
   if (addAllBtn) {
     addAllBtn.addEventListener('click', async () => {
-      const selected = currentRows.filter((r) => r.included);
+      const selected = currentRows.filter(
+        (r) => r.included && r.selectedProduct && Number(r.selectedProduct.stock) > 0
+      );
       if (selected.length === 0) {
-        appStore.showToast('Selecciona al menos un artículo de la lista.', 'warning');
+        appStore.showToast(
+          'Selecciona al menos un artículo disponible de la lista.',
+          'warning'
+        );
         return;
       }
-      for (const row of selected) {
-        await cartService.addItem(row.selectedProduct, row.qty);
+
+      addAllBtn.disabled = true;
+      let addedCount = 0;
+      try {
+        for (const row of selected) {
+          const result = await cartService.addItem(row.selectedProduct, row.qty, {
+            silentToast: true,
+          });
+          if (result?.success) {
+            addedCount += 1;
+          }
+        }
+        if (addedCount > 0) {
+          appStore.showToast(
+            `${addedCount} artículo${addedCount === 1 ? '' : 's'} de la lista agregado${addedCount === 1 ? '' : 's'} al carrito.`,
+            'success'
+          );
+          appStore.setCartDrawerOpen(true);
+        } else {
+          appStore.showToast(
+            'No fue posible agregar los artículos seleccionados al carrito.',
+            'danger'
+          );
+        }
+      } finally {
+        addAllBtn.disabled = false;
       }
-      appStore.setCartDrawerOpen(true);
     });
   }
 

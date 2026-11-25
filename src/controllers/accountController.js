@@ -55,10 +55,11 @@ export async function initAccountController(page) {
 
   const user = authService.getCurrentUser();
   if (userSummary) {
+    const displayName = user ? user.name || user.fullName || user.email : '';
     setSafeText(
       userSummary,
       user
-        ? `${user.name} (${user.email}) · Perfil: ${user.role || 'Usuario'}`
+        ? `${displayName} (${user.email}) · Perfil: ${user.role || 'Usuario'}`
         : 'Sesión de invitado (inicia sesión para sincronizar tus pedidos).'
     );
   }
@@ -92,8 +93,8 @@ export async function initAccountController(page) {
               text: 'Eliminar',
               attrs: { type: 'button' },
               events: {
-                click: () => {
-                  userService.deleteAddress(addr.id);
+                click: async () => {
+                  await userService.deleteAddress(addr.id);
                   renderAddresses();
                 },
               },
@@ -132,12 +133,17 @@ export async function initAccountController(page) {
         return;
       }
 
-      await userService.addAddress({ label, recipient, street, city, postalCode, phone });
+      const res = await userService.addAddress({ label, recipient, street, city, postalCode, phone });
+      if (!res.success) {
+        setSafeText(addressError, res.message || 'No se pudo guardar la dirección.');
+        return;
+      }
       addressForm.reset();
       renderAddresses();
       appStore.showToast('Dirección guardada correctamente.', 'success');
     });
   }
 
+  await userService.fetchAddresses();
   renderAddresses();
 }

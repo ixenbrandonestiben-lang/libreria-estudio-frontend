@@ -1,6 +1,17 @@
 import { appStore } from '../state/appStore.js';
 import { apiRequest } from './apiClient.js';
 
+function normalizeUser(user) {
+  if (!user || typeof user !== 'object') return null;
+  const fullName = user.fullName || user.full_name || user.name || '';
+  const fallback = user.email ? user.email.split('@')[0] : 'Usuario';
+  return {
+    ...user,
+    fullName: fullName || fallback,
+    name: user.name || fullName || fallback,
+  };
+}
+
 export const authService = {
   async login({ email, password }) {
     const res = await apiRequest('/auth/login', {
@@ -9,17 +20,22 @@ export const authService = {
     });
 
     if (res.success && res.data?.user) {
-      appStore.setAuth(res.data.user, res.data.token || 'jwt-session');
-      return res;
+      const normalizedUser = normalizeUser(res.data.user);
+      appStore.setAuth(normalizedUser, res.data.token || 'jwt-session');
+      return {
+        ...res,
+        data: { ...res.data, user: normalizedUser },
+      };
     }
 
     if (res.error?.code === 'NETWORK_OFFLINE') {
-      const demoUser = {
+      const fallbackName = email.split('@')[0].replace(/[._-]/g, ' ');
+      const demoUser = normalizeUser({
         id: 'usr-demo-1',
-        name: email.split('@')[0].replace(/[._-]/g, ' '),
+        name: fallbackName,
         email,
         role: 'Padre de familia / Estudiante',
-      };
+      });
       appStore.setAuth(demoUser, 'demo-token-local');
       return {
         success: true,
@@ -32,24 +48,29 @@ export const authService = {
     return res;
   },
 
-  async register({ name, email, password, role }) {
+  async register({ name, fullName, email, password, role }) {
+    const resolvedFullName = String(fullName || name || '').trim();
     const res = await apiRequest('/auth/register', {
       method: 'POST',
-      body: { name, email, password, role },
+      body: { fullName: resolvedFullName, email, password },
     });
 
     if (res.success && res.data?.user) {
-      appStore.setAuth(res.data.user, res.data.token || 'jwt-session');
-      return res;
+      const normalizedUser = normalizeUser(res.data.user);
+      appStore.setAuth(normalizedUser, res.data.token || 'jwt-session');
+      return {
+        ...res,
+        data: { ...res.data, user: normalizedUser },
+      };
     }
 
     if (res.error?.code === 'NETWORK_OFFLINE') {
-      const demoUser = {
+      const demoUser = normalizeUser({
         id: `usr-${Date.now()}`,
-        name,
+        name: resolvedFullName,
         email,
         role: role || 'Estudiante',
-      };
+      });
       appStore.setAuth(demoUser, 'demo-token-local');
       return {
         success: true,
@@ -84,7 +105,7 @@ export const authService = {
   },
 
   getCurrentUser() {
-    return appStore.getState().user;
+    return normalizeUser(appStore.getState().user);
   },
 
   isAuthenticated() {

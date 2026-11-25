@@ -60,12 +60,14 @@ export function renderFilterSidebar(container, { categories, brands, filters, on
     },
     [
       createElement('option', { text: 'Todas las marcas', attrs: { value: '' } }),
-      ...brands.map((b) =>
-        createElement('option', {
-          text: b,
-          attrs: { value: b, selected: filters.brand === b },
-        })
-      ),
+      ...brands.map((b) => {
+        const value = typeof b === 'string' ? b : b.id;
+        const label = typeof b === 'string' ? b : b.name;
+        return createElement('option', {
+          text: label,
+          attrs: { value, selected: filters.brand === value },
+        });
+      }),
     ]
   );
 

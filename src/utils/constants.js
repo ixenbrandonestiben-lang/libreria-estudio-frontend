@@ -4,7 +4,7 @@
 
 export const API_BASE_URL =
   (typeof window !== 'undefined' && window.__API_BASE_URL__) ||
-  'http://localhost:4000/api/v1';
+  'http://localhost:3000/api/v1';
 
 export const RESERVATION_MINUTES = 15;
 export const SEARCH_DEBOUNCE_MS = 300;
@@ -45,7 +45,17 @@ export function resolvePageUrl(routeKey, queryParams = null) {
 }
 
 export function resolveAssetUrl(assetPath) {
-  const clean = String(assetPath ?? '').replace(/^\/+/, '');
+  const raw = String(assetPath ?? '').trim();
+  if (!raw) {
+    return `${getRootPrefix()}src/assets/images/products/cuaderno.svg`;
+  }
+  if (/^https?:\/\//i.test(raw)) {
+    return raw;
+  }
+  const clean = raw.replace(/^\/+/, '');
+  if (clean.startsWith('assets/')) {
+    return `${getRootPrefix()}src/${clean}`;
+  }
   return `${getRootPrefix()}${clean}`;
 }
 

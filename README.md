@@ -25,7 +25,7 @@ cp .env.example .env
 npm run dev
 ```
 
-Abre en tu navegador: **`http://localhost:3000`**
+Abre en tu navegador: **`http://localhost:8080`**
 
 *(Si el backend aún no está levantado, el frontend funciona en modo demostración local para explorar catálogo, filtros, cotizador de listas y carrito).*
 
