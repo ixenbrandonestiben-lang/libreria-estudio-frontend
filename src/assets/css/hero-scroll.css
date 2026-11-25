@@ -114,11 +114,16 @@
   }
 }
 
-/* Scroll reveal con IntersectionObserver */
+/* Scroll reveal con IntersectionObserver (visible por defecto si JS falla) */
 .reveal {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity var(--transition-slow), transform var(--transition-slow);
+}
+
+.reveal.reveal--pending {
   opacity: 0;
   transform: translateY(18px);
-  transition: opacity var(--transition-slow), transform var(--transition-slow);
 }
 
 .reveal--visible {
