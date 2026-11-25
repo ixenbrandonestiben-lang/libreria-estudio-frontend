@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cotizador de Listas Escolares | Librería Estudio</title>
+  <link rel="icon" type="image/svg+xml" href="../../src/assets/images/favicon.svg">
+  <link rel="stylesheet" href="../../src/assets/css/variables.css">
+  <link rel="stylesheet" href="../../src/assets/css/reset.css">
+  <link rel="stylesheet" href="../../src/assets/css/base.css">
+  <link rel="stylesheet" href="../../src/assets/css/layout.css">
+  <link rel="stylesheet" href="../../src/assets/css/hero-scroll.css">
+  <link rel="stylesheet" href="../../src/assets/css/components.css">
+  <link rel="stylesheet" href="../../src/assets/css/pages.css">
+</head>
+<body data-page="list-builder">
+  <a class="skip-link" href="#main-content">Saltar al contenido principal</a>
+  <header id="navbar-root"></header>
+
+  <main id="main-content">
+    <section class="page-header">
+      <div class="container">
+        <nav class="breadcrumb" aria-label="Ruta de navegación">
+          <a href="../../index.html">Inicio</a>
+          <span aria-hidden="true">/</span>
+          <span>Cotizador de Listas Escolares</span>
+        </nav>
+        <h1>Cotizador de Listas Escolares</h1>
+        <p>Elige un grado escolar o pega tu lista (una línea por artículo, ej. "4 Cuadernos cuadro chico").</p>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container">
+        <div class="card">
+          <div class="form-group">
+            <span class="form-label">Plantillas rápidas por nivel</span>
+            <div id="grade-templates-root" class="hero__actions"></div>
+          </div>
+          <div class="form-group">
+            <label for="school-list-input" class="form-label">O pega tu lista de útiles aquí</label>
+            <textarea id="school-list-input" class="form-textarea" rows="4" placeholder="4 Cuaderno profesional cuadro chico&#10;1 Caja lápices HB&#10;1 Juego de geometría&#10;1 Calculadora científica"></textarea>
+          </div>
+          <button id="quote-list-btn" class="btn btn--secondary" type="button">Cotizar lista</button>
+        </div>
+
+        <div id="school-list-rows-root" class="grid"></div>
+
+        <div class="list-summary-bar">
+          <div>
+            <span class="text-sm text-muted">Total estimado de artículos seleccionados</span>
+            <div id="school-list-total" class="product-card__price">$0.00</div>
+          </div>
+          <button id="add-list-to-cart-btn" class="btn btn--primary btn--lg" type="button">
+            Agregar lista al carrito
+          </button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer id="footer-root"></footer>
+  <div id="cart-drawer-root"></div>
+  <div id="cookie-banner-root"></div>
+  <div id="cookie-modal-root"></div>
+  <div id="help-widget-root"></div>
+  <div id="toast-root"></div>
+
+  <script type="module" src="../../src/main.js"></script>
+</body>
+</html>
