@@ -1,6 +1,6 @@
 import { mountCartDrawer } from './components/CartDrawer.js';
-import { mountCookieBanner } from './components/CookieBanner.js';
-import { mountCookiePreferencesModal } from './components/CookiePreferencesModal.js';
+import { mountCookieBanner } from './components/PrivacyNoticeBanner.js';
+import { mountCookiePreferencesModal } from './components/PrivacyPreferencesModal.js';
 import { mountFooter } from './components/Footer.js';
 import { mountHelpQuickWidget } from './components/HelpQuickWidget.js';
 import { mountNavbar } from './components/Navbar.js';
