@@ -1,4 +1,4 @@
-import { cookieService } from '../services/cookieService.js';
+import { cookieService } from '../services/privacyConsentService.js';
 import { appStore } from '../state/appStore.js';
 import { COOKIE_CATEGORIES } from '../utils/constants.js';
 import { clearElement, createElement } from '../utils/domSanitizer.js';
