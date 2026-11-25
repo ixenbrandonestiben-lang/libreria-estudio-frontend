@@ -30,15 +30,22 @@ export function initScrollObserver() {
     (entries) => {
       for (const entry of entries) {
         if (entry.isIntersecting) {
+          entry.target.classList.remove('reveal--pending');
           entry.target.classList.add('reveal--visible');
           observer.unobserve(entry.target);
         }
       }
     },
-    { threshold: 0.12, rootMargin: '0px 0px -30px 0px' }
+    { threshold: 0.08, rootMargin: '0px 0px -20px 0px' }
   );
 
   for (const el of revealTargets) {
-    observer.observe(el);
+    const rect = el.getBoundingClientRect();
+    if (rect.top < window.innerHeight) {
+      el.classList.add('reveal--visible');
+    } else {
+      el.classList.add('reveal--pending');
+      observer.observe(el);
+    }
   }
 }
