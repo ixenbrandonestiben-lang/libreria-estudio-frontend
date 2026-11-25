@@ -21,6 +21,7 @@ export const ROUTES = {
   forgotPassword: 'src/pages/forgot-password.html',
   resetPassword: 'src/pages/reset-password.html',
   account: 'src/pages/account.html',
+  admin: 'src/pages/admin.html',
   orders: 'src/pages/orders.html',
   help: 'src/pages/help.html',
   trackOrder: 'src/pages/track-order.html',

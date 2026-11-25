@@ -6,6 +6,7 @@ import { mountHelpQuickWidget } from './components/HelpQuickWidget.js';
 import { mountNavbar } from './components/Navbar.js';
 import { mountToastNotification } from './components/ToastNotification.js';
 import { initAccountController } from './controllers/accountController.js';
+import { initAdminController } from './controllers/adminController.js';
 import { initAuthController } from './controllers/authController.js';
 import { initCatalogController } from './controllers/catalogController.js';
 import { initCheckoutController } from './controllers/checkoutController.js';
@@ -52,6 +53,9 @@ function bootstrap() {
     case 'account':
     case 'orders':
       initAccountController(page);
+      break;
+    case 'admin':
+      initAdminController();
       break;
     case 'help':
     case 'track-order':
