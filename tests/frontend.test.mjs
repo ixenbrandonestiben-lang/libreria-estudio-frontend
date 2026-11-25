@@ -359,3 +359,174 @@ describe('API contracts, Navbar, and Cart regression', () => {
     });
   });
 });
+
+describe('adminService & Admin Navbar regression', () => {
+  it('Navbar shows Panel Admin link only when user role is admin', async () => {
+    await withDomMocks(async ({ makeEl }) => {
+      const { appStore } = await import('../src/state/appStore.js');
+      const { mountNavbar } = await import('../src/components/Navbar.js');
+
+      const headerAdmin = makeEl('header');
+      appStore.setAuth({ id: 1, fullName: 'Admin User', email: 'admin@test.com', role: 'admin' }, 'tok');
+      mountNavbar(headerAdmin);
+
+      const collectLinks = (node) => {
+        const list = [];
+        if (node.tagName === 'A') list.push(node.textContent);
+        for (const child of node.children || []) {
+          list.push(...collectLinks(child));
+        }
+        return list;
+      };
+
+      const adminLinks = collectLinks(headerAdmin);
+      assert.ok(adminLinks.includes('Panel Admin'));
+
+      const headerCustomer = makeEl('header');
+      appStore.setAuth({ id: 2, fullName: 'Cliente', email: 'cli@test.com', role: 'customer' }, 'tok2');
+      mountNavbar(headerCustomer);
+      const customerLinks = collectLinks(headerCustomer);
+      assert.equal(customerLinks.includes('Panel Admin'), false);
+
+      appStore.setAuth(null, null);
+    });
+  });
+
+  it('adminService consumes backend admin endpoints and PATCH /orders/:orderNumber/status', async () => {
+    await withDomMocks(async () => {
+      const calls = [];
+      globalThis.fetch = async (url, opts = {}) => {
+        calls.push({ url, method: opts.method || 'GET', body: opts.body ? JSON.parse(opts.body) : null });
+
+        if (url.endsWith('/admin/products')) {
+          return {
+            ok: true,
+            status: 200,
+            headers: { get: () => null },
+            json: async () => ({
+              success: true,
+              data: [
+                {
+                  id: 10,
+                  sku: 'SKU-ADM',
+                  title: 'Cuaderno Admin',
+                  brand_name: 'Scribe',
+                  category_slug: 'cuadernos',
+                  price: '85.00',
+                  stock_available: 20,
+                  is_active: true,
+                },
+              ],
+            }),
+          };
+        }
+
+        if (url.endsWith('/orders/LE-2026-0999/status')) {
+          return {
+            ok: true,
+            status: 200,
+            headers: { get: () => null },
+            json: async () => ({
+              success: true,
+              data: {
+                id: 99,
+                order_number: 'LE-2026-0999',
+                customer_email: 'cliente@test.com',
+                total_amount: '150.00',
+                status: 'shipped',
+                created_at: '2026-11-20T12:00:00Z',
+              },
+            }),
+          };
+        }
+
+        if (url.endsWith('/admin/users/5')) {
+          return {
+            ok: true,
+            status: 200,
+            headers: { get: () => null },
+            json: async () => ({
+              success: true,
+              data: { id: 5, full_name: 'Docente', email: 'doc@test.com', role: 'admin', is_active: true },
+            }),
+          };
+        }
+
+        return {
+          ok: true,
+          status: 200,
+          headers: { get: () => null },
+          json: async () => ({ success: true, data: [] }),
+        };
+      };
+
+      const { adminService } = await import('../src/services/adminService.js');
+
+      const prodRes = await adminService.getProducts();
+      assert.equal(prodRes.success, true);
+      assert.equal(prodRes.isDemo, false);
+      assert.equal(prodRes.data[0].name, 'Cuaderno Admin');
+      assert.equal(prodRes.data[0].stock, 20);
+
+      const orderRes = await adminService.updateOrderStatus('LE-2026-0999', 'shipped');
+      assert.equal(orderRes.success, true);
+      assert.equal(orderRes.data.status, 'shipped');
+      assert.equal(calls[1].method, 'PATCH');
+      assert.deepEqual(calls[1].body, { status: 'shipped' });
+
+      const userRes = await adminService.updateUser(5, { role: 'admin', isActive: true });
+      assert.equal(userRes.success, true);
+      assert.equal(userRes.data.role, 'admin');
+    });
+  });
+
+  it('adminService falls back to local demo mode when NETWORK_OFFLINE', async () => {
+    await withDomMocks(async () => {
+      globalThis.fetch = async () => {
+        throw new Error('offline');
+      };
+
+      const { adminService } = await import('../src/services/adminService.js');
+
+      const prods = await adminService.getProducts();
+      assert.equal(prods.success, true);
+      assert.equal(prods.isDemo, true);
+      assert.ok(prods.data.length > 0);
+
+      const created = await adminService.createProduct({
+        sku: 'DEMO-01',
+        title: 'Regla Demo',
+        brandName: 'Maped',
+        categorySlug: 'arte',
+        price: 45,
+        stockAvailable: 10,
+      });
+      assert.equal(created.success, true);
+      assert.equal(created.isDemo, true);
+      assert.equal(created.data.sku, 'DEMO-01');
+
+      const orders = await adminService.getOrders();
+      assert.equal(orders.success, true);
+      assert.equal(orders.isDemo, true);
+      const firstOrder = orders.data[0];
+      const updatedOrder = await adminService.updateOrderStatus(firstOrder.orderNumber, 'delivered');
+      assert.equal(updatedOrder.success, true);
+      assert.equal(updatedOrder.data.status, 'delivered');
+
+      const tickets = await adminService.getTickets();
+      assert.equal(tickets.success, true);
+      assert.equal(tickets.isDemo, true);
+      const updatedTicket = await adminService.updateTicketStatus(tickets.data[0].id, 'resolved');
+      assert.equal(updatedTicket.success, true);
+      assert.equal(updatedTicket.data.status, 'resolved');
+
+      const users = await adminService.getUsers();
+      assert.equal(users.success, true);
+      assert.equal(users.isDemo, true);
+      const updatedUser = await adminService.updateUser(users.data[1].id, { role: 'admin', isActive: false });
+      assert.equal(updatedUser.success, true);
+      assert.equal(updatedUser.data.role, 'admin');
+      assert.equal(updatedUser.data.isActive, false);
+    });
+  });
+});

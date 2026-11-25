@@ -48,6 +48,10 @@ export function mountNavbar(container) {
       { key: 'help', label: 'Ayuda', page: 'help' },
     ];
 
+    if (user?.role === 'admin') {
+      navLinks.push({ key: 'admin', label: 'Panel Admin', page: 'admin' });
+    }
+
     const nav = createElement(
       'nav',
       { className: 'navbar__nav', attrs: { 'aria-label': 'Navegación principal' } },
