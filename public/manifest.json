@@ -1,0 +1,10 @@
+{
+  "name": "Librería Estudio",
+  "short_name": "Librería Estudio",
+  "description": "Catálogo y espacio editorial de Librería Estudio.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#1a1a1a",
+  "lang": "es"
+}
