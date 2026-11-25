@@ -1,59 +1,39 @@
 # Librería Estudio — Frontend
 
-Aplicación web de **Librería Estudio** servida con **Nginx Alpine** endurecido para producción en Docker / Dokploy.
+Aplicación web estática modular de **Librería Estudio** (HTML5 semántico, CSS3 con tokens oficiales y JavaScript ES6+ nativo con `type="module"`), sin dependencias de build ni Docker.
 
 ## Requisitos previos
 
-- **Docker** y **Docker Compose** (v2+)
-- **Node.js** `>= 20.x` (opcional, para linting y formateo local)
+- **Python 3** (para el servidor estático local `npm run dev`) o cualquier servidor HTTP estático (Live Server, Caddy, Nginx, Vercel, Netlify, etc.)
+- **Node.js** `>= 20.x` (para ejecutar verificaciones y pruebas unitarias)
 
 ## Configuración inicial
 
-1. Copia el archivo de variables de entorno de ejemplo:
+1. Copia el archivo de variables de entorno de ejemplo si necesitas configurar la URL del Backend:
 
 ```bash
 cp .env.example .env
 ```
 
-2. Ajusta `FRONTEND_PORT`, `API_BASE_URL` y `SITE_URL` según tu entorno. En `public/robots.txt` y `public/sitemap.xml`, actualiza el dominio de ejemplo por tu dominio final antes de publicar.
+2. En `public/robots.txt` y `public/sitemap.xml`, actualiza el dominio de ejemplo por tu dominio final antes de publicar.
 
-## Uso en desarrollo con Docker
+## Ejecución en desarrollo local
 
-Para levantar el servidor Nginx con volúmenes montados en vivo (sin reconstruir la imagen ante cada cambio en `index.html`, `src/`, `public/` o `nginx/`):
-
-```bash
-docker compose -f docker-compose.dev.yml up -d
-```
-
-La aplicación estará disponible en `http://localhost:8080`.
-
-## Despliegue en producción con Docker
-
-El `Dockerfile` utiliza `nginx:alpine` ejecutándose como usuario no-root (`nginx`) en el puerto `8080`, con:
-- `autoindex off` y bloqueo de archivos ocultos (`/.*`)
-- Compresión `gzip` habilitada
-- Caché de 30 días para activos estáticos y `no-cache` para archivos `.html`
-- Cabeceras de seguridad (`server_tokens off`, `X-Content-Type-Options: nosniff`, `X-Frame-Options: SAMEORIGIN`, `Referrer-Policy: strict-origin-when-cross-origin`)
-- Endpoint `/health` para verificación de estado
-
-Para construir y levantar en producción:
+> **Importante:** Al usar módulos ES6 nativos (`type="module"`), abre la aplicación desde un servidor HTTP local (no haciendo doble clic en `file://`).
 
 ```bash
-docker compose up -d --build
+npm run dev
 ```
 
-Para revisar estado y logs:
+Abre en tu navegador: **`http://localhost:3000`**
 
-```bash
-docker compose ps
-docker compose logs -f frontend-web
-```
+*(Si el backend aún no está levantado, el frontend funciona en modo demostración local para explorar catálogo, filtros, cotizador de listas y carrito).*
 
-## Calidad de código
-
-Si tienes `eslint` y `prettier` instalados en el proyecto:
+## Verificación y pruebas
 
 ```bash
 npm run lint
 npm run format
+npm run verificar
+node --test tests/*.test.mjs
 ```
