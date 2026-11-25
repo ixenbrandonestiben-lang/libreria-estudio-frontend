@@ -9,7 +9,7 @@ export async function initHomeController() {
   mountHeroSection(heroRoot);
 
   const catRoot = document.getElementById('categories-root');
-  renderCategoryGrid(catRoot, productService.getCategories());
+  renderCategoryGrid(catRoot, await productService.fetchCategories());
 
   const featuredRoot = document.getElementById('featured-products-root');
   if (featuredRoot) {

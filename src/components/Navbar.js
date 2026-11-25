@@ -60,9 +60,15 @@ export function mountNavbar(container) {
       )
     );
 
+    const displayName = user
+      ? String(user.name || user.fullName || user.email || 'Cuenta')
+          .trim()
+          .split(/\s+/)[0]
+      : '';
+
     const accountLink = createElement('a', {
       className: 'btn btn--outline btn--sm',
-      text: user ? `Mi cuenta (${user.name.split(' ')[0]})` : 'Ingresar',
+      text: user ? `Mi cuenta (${displayName})` : 'Ingresar',
       attrs: { href: resolvePageUrl(user ? 'account' : 'login') },
     });
 

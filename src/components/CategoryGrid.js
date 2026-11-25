@@ -29,7 +29,10 @@ export function renderCategoryGrid(container, categories) {
           createElement('h3', { className: 'category-card__title', text: cat.name }),
           createElement('span', {
             className: 'category-card__count',
-            text: `${cat.count} artículos`,
+            text:
+              cat.count !== undefined && cat.count !== null
+                ? `${cat.count} artículos`
+                : 'Explorar categoría',
           }),
         ]
       )

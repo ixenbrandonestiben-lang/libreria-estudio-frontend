@@ -81,11 +81,19 @@ export function initCheckoutController() {
     const phone = String(data.get('phone') || '');
     const street = String(data.get('street') || '');
     const postalCode = String(data.get('postalCode') || '');
+    const city = String(data.get('city') || '').trim();
+    const stateOrDepartment = String(data.get('stateOrDepartment') || '').trim();
     const paymentMethod = String(data.get('paymentMethod') || 'card');
     const requiresInvoice = data.get('requiresInvoice') === 'on';
     const termsAccepted = data.get('termsAccepted') === 'on';
 
-    if (!isRequired(name) || !isValidEmail(email) || !isValidPhone(phone) || !isRequired(street) || !isValidPostalCode(postalCode)) {
+    if (
+      !isRequired(name) ||
+      !isValidEmail(email) ||
+      !isValidPhone(phone) ||
+      !isRequired(street) ||
+      !isValidPostalCode(postalCode)
+    ) {
       setSafeText(errorEl, 'Verifica tus datos de contacto, teléfono (10 dígitos) y código postal (5 dígitos).');
       return;
     }
@@ -101,6 +109,10 @@ export function initCheckoutController() {
       fullName: name,
       email,
       phone,
+      street,
+      postalCode,
+      city: city || 'Ciudad de México',
+      stateOrDepartment: stateOrDepartment || 'CDMX',
       address: `${street}, CP ${postalCode}`,
       paymentMethod,
       requiresInvoice,
@@ -114,7 +126,8 @@ export function initCheckoutController() {
       return;
     }
 
-    appStore.showToast(`¡Pedido ${res.data.id} confirmado!`, 'success');
+    const orderLabel = res.data?.orderNumber || res.data?.id || '';
+    appStore.showToast(`¡Pedido ${orderLabel} confirmado!`, 'success');
     window.location.href = resolvePageUrl('orders');
   });
 }

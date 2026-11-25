@@ -42,12 +42,20 @@ export async function initCatalogController() {
     });
   }
 
+  const [categories, brands] = await Promise.all([
+    productService.fetchCategories(),
+    productService.fetchBrands(),
+  ]);
+
   async function loadCatalog() {
     const { filters } = appStore.getState();
+    if (sortSelect) {
+      sortSelect.value = filters.sort || 'featured';
+    }
 
     renderFilterSidebar(sidebarRoot, {
-      categories: productService.getCategories(),
-      brands: productService.getBrands(),
+      categories,
+      brands,
       filters,
       onChange: (partial) => {
         appStore.setFilters(partial);
