@@ -78,4 +78,37 @@ export function initAuthController(page) {
       }
     });
   }
+
+  const resetForm = document.getElementById('reset-form');
+  if (page === 'reset-password' && resetForm) {
+    const tokenInput = resetForm.querySelector('#reset-token');
+    const urlToken = new URLSearchParams(window.location.search).get('token');
+    if (tokenInput && urlToken) {
+      tokenInput.value = urlToken;
+    }
+
+    resetForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      setSafeText(feedbackEl, '');
+      const data = new FormData(resetForm);
+      const token = String(data.get('token') || '').trim();
+      const newPassword = String(data.get('newPassword') || '');
+
+      if (!isRequired(token)) {
+        setSafeText(feedbackEl, 'El token de recuperación es obligatorio.');
+        return;
+      }
+      if (!isStrongPassword(newPassword)) {
+        setSafeText(feedbackEl, 'La contraseña debe tener mínimo 8 caracteres, letras y números.');
+        return;
+      }
+
+      const res = await authService.resetPassword({ token, newPassword });
+      setSafeText(feedbackEl, res.message);
+      if (res.success) {
+        appStore.showToast('Contraseña restablecida correctamente.', 'success');
+        window.location.href = resolvePageUrl('login');
+      }
+    });
+  }
 }

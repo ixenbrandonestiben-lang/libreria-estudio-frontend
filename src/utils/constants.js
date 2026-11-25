@@ -19,6 +19,7 @@ export const ROUTES = {
   login: 'src/pages/login.html',
   register: 'src/pages/register.html',
   forgotPassword: 'src/pages/forgot-password.html',
+  resetPassword: 'src/pages/reset-password.html',
   account: 'src/pages/account.html',
   orders: 'src/pages/orders.html',
   help: 'src/pages/help.html',

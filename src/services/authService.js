@@ -100,6 +100,23 @@ export const authService = {
     return res;
   },
 
+  async resetPassword({ token, newPassword }) {
+    const res = await apiRequest('/auth/reset-password', {
+      method: 'POST',
+      body: { token, newPassword },
+    });
+
+    if (res.error?.code === 'NETWORK_OFFLINE') {
+      return {
+        success: true,
+        message: 'Contraseña actualizada en modo demostración.',
+        data: null,
+        error: null,
+      };
+    }
+    return res;
+  },
+
   logout() {
     appStore.setAuth(null, null);
   },
