@@ -56,6 +56,7 @@ export async function apiRequest(endpoint, options = {}) {
   try {
     const response = await fetch(`${base}${path}`, {
       method,
+      credentials: 'include',
       headers: requestHeaders,
       body: body === null ? undefined : body instanceof FormData ? body : JSON.stringify(body),
       signal: controller.signal,
