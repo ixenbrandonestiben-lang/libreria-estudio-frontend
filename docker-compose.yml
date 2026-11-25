@@ -1,0 +1,21 @@
+services:
+  frontend-web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: libreria-estudio-frontend
+    restart: unless-stopped
+    ports:
+      - "${FRONTEND_PORT:-8080}:8080"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:8080/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    networks:
+      - frontend-net
+
+networks:
+  frontend-net:
+    driver: bridge

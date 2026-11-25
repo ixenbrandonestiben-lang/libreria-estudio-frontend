@@ -1,0 +1,22 @@
+# Control de versiones y entorno
+.git/
+.gitignore
+.env
+.env.*
+!.env.example
+
+# Dependencias de desarrollo y herramientas
+node_modules/
+npm-debug.log*
+logs/
+*.log
+
+# Documentación y configuración Docker/IDE
+README.md
+.eslintrc.json
+.prettierrc.json
+docker-compose*.yml
+Dockerfile
+.vscode/
+.idea/
+.DS_Store
