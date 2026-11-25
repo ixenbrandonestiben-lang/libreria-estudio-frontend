@@ -28,6 +28,7 @@ const REQUIRED_FILES = [
   'src/pages/register.html',
   'src/pages/forgot-password.html',
   'src/pages/account.html',
+  'src/pages/admin.html',
   'src/pages/orders.html',
   'src/pages/help.html',
   'src/pages/track-order.html',
@@ -50,6 +51,7 @@ const REQUIRED_FILES = [
   'src/components/ToastNotification.js',
   'src/components/Footer.js',
   'src/services/apiClient.js',
+  'src/services/adminService.js',
   'src/services/authService.js',
   'src/services/productService.js',
   'src/services/schoolListService.js',
@@ -71,6 +73,7 @@ const REQUIRED_FILES = [
   'src/controllers/checkoutController.js',
   'src/controllers/authController.js',
   'src/controllers/accountController.js',
+  'src/controllers/adminController.js',
   'src/controllers/helpController.js',
   'src/controllers/legalController.js',
 ];

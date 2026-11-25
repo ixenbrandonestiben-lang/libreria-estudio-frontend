@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Panel de Administración | Librería Estudio</title>
+  <link rel="icon" type="image/svg+xml" href="../../src/assets/images/favicon.svg">
+  <link rel="stylesheet" href="../../src/assets/css/variables.css">
+  <link rel="stylesheet" href="../../src/assets/css/reset.css">
+  <link rel="stylesheet" href="../../src/assets/css/base.css">
+  <link rel="stylesheet" href="../../src/assets/css/layout.css">
+  <link rel="stylesheet" href="../../src/assets/css/hero-scroll.css">
+  <link rel="stylesheet" href="../../src/assets/css/components.css">
+  <link rel="stylesheet" href="../../src/assets/css/pages.css">
+</head>
+<body data-page="admin">
+  <a class="skip-link" href="#main-content">Saltar al contenido principal</a>
+  <header id="navbar-root"></header>
+
+  <main id="main-content">
+    <section class="page-header">
+      <div class="container section__header--row">
+        <div>
+          <nav class="breadcrumb" aria-label="Ruta de navegación">
+            <a href="../../index.html">Inicio</a>
+            <span aria-hidden="true">/</span>
+            <span aria-current="page">Administración</span>
+          </nav>
+          <h1>Panel de Administración</h1>
+          <p id="admin-user-summary" class="text-sm">Verificando permisos de administrador...</p>
+        </div>
+        <div class="navbar__actions">
+          <a class="btn btn--outline btn--sm" href="./catalog.html">Ver Catálogo</a>
+          <a class="btn btn--outline btn--sm" href="./account.html">Mi Cuenta</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container">
+        <div id="admin-restricted-view" class="card admin-restricted hidden" role="region" aria-label="Acceso restringido">
+          <span class="badge badge--warning">Acceso restringido</span>
+          <h2>Solo personal autorizado</h2>
+          <p class="text-sm">
+            Necesitas iniciar sesión con una cuenta con rol de administrador para gestionar productos,
+            órdenes, tickets de soporte y usuarios.
+          </p>
+          <div class="admin-restricted__actions">
+            <a class="btn btn--primary" href="./login.html">Iniciar sesión</a>
+            <a class="btn btn--outline" href="../../index.html">Volver al inicio</a>
+            <button id="admin-demo-btn" class="btn btn--accent hidden" type="button">
+              Vista Demo Admin
+            </button>
+          </div>
+        </div>
+
+        <div id="admin-workspace" class="hidden">
+          <div id="admin-demo-banner" class="admin-demo-banner hidden" role="status">
+            <strong>Modo Demostración Local:</strong> El servidor backend no está conectado. Los cambios se guardan temporalmente en tu navegador.
+          </div>
+
+          <div class="admin-tabs" role="tablist" aria-label="Secciones de administración">
+            <button
+              id="tab-products"
+              class="admin-tab"
+              type="button"
+              role="tab"
+              aria-selected="true"
+              aria-controls="panel-products"
+              data-tab="products"
+            >
+              Productos e Inventario
+            </button>
+            <button
+              id="tab-orders"
+              class="admin-tab"
+              type="button"
+              role="tab"
+              aria-selected="false"
+              aria-controls="panel-orders"
+              data-tab="orders"
+            >
+              Órdenes
+            </button>
+            <button
+              id="tab-tickets"
+              class="admin-tab"
+              type="button"
+              role="tab"
+              aria-selected="false"
+              aria-controls="panel-tickets"
+              data-tab="tickets"
+            >
+              Tickets de Soporte
+            </button>
+            <button
+              id="tab-users"
+              class="admin-tab"
+              type="button"
+              role="tab"
+              aria-selected="false"
+              aria-controls="panel-users"
+              data-tab="users"
+            >
+              Usuarios y Roles
+            </button>
+          </div>
+
+          <section id="panel-products" class="admin-panel" role="tabpanel" aria-labelledby="tab-products">
+            <div class="admin-panel__header">
+              <h2>Productos e Inventario</h2>
+              <button id="admin-refresh-products" class="btn btn--outline btn--sm" type="button">
+                Actualizar listado
+              </button>
+            </div>
+
+            <form id="admin-create-product-form" class="card" novalidate>
+              <h3>Nuevo producto</h3>
+              <div class="grid grid--3">
+                <div class="form-group">
+                  <label for="prod-sku" class="form-label">SKU</label>
+                  <input id="prod-sku" name="sku" class="form-input" type="text" placeholder="Ej. CUA-PRO-100" required>
+                </div>
+                <div class="form-group">
+                  <label for="prod-title" class="form-label">Nombre del producto</label>
+                  <input id="prod-title" name="title" class="form-input" type="text" placeholder="Ej. Cuaderno Profesional 100h" required>
+                </div>
+                <div class="form-group">
+                  <label for="prod-brand" class="form-label">Marca</label>
+                  <input id="prod-brand" name="brandName" class="form-input" type="text" placeholder="Ej. Scribe" required>
+                </div>
+              </div>
+              <div class="grid grid--3">
+                <div class="form-group">
+                  <label for="prod-category" class="form-label">Categoría</label>
+                  <select id="prod-category" name="categorySlug" class="form-select">
+                    <option value="cuadernos">Cuadernos y Libretas</option>
+                    <option value="escritura">Escritura y Trazado</option>
+                    <option value="arte">Arte y Dibujo Técnico</option>
+                    <option value="mochilas">Mochilas y Estuches</option>
+                    <option value="tecnologia">Tecnología Escolar</option>
+                    <option value="listas">Paquetes Escolares</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="prod-price" class="form-label">Precio (MXN)</label>
+                  <input id="prod-price" name="price" class="form-input" type="number" step="0.01" min="1" required>
+                </div>
+                <div class="form-group">
+                  <label for="prod-stock" class="form-label">Stock inicial</label>
+                  <input id="prod-stock" name="stockAvailable" class="form-input" type="number" step="1" min="0" required>
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="prod-description" class="form-label">Descripción breve</label>
+                <textarea id="prod-description" name="description" class="form-textarea" rows="2" placeholder="Especificaciones técnicas o gramaje..."></textarea>
+              </div>
+              <div class="form-check">
+                <input id="prod-active" name="isActive" type="checkbox" checked>
+                <label for="prod-active">Producto activo en tienda</label>
+              </div>
+              <p id="admin-product-error" class="form-error" role="alert"></p>
+              <button class="btn btn--primary" type="submit">Crear producto</button>
+            </form>
+
+            <div id="admin-products-root"></div>
+          </section>
+
+          <section id="panel-orders" class="admin-panel hidden" role="tabpanel" aria-labelledby="tab-orders">
+            <div class="admin-panel__header">
+              <h2>Gestión de Órdenes</h2>
+              <button id="admin-refresh-orders" class="btn btn--outline btn--sm" type="button">
+                Actualizar órdenes
+              </button>
+            </div>
+            <div id="admin-orders-root"></div>
+          </section>
+
+          <section id="panel-tickets" class="admin-panel hidden" role="tabpanel" aria-labelledby="tab-tickets">
+            <div class="admin-panel__header">
+              <h2>Tickets de Soporte</h2>
+              <button id="admin-refresh-tickets" class="btn btn--outline btn--sm" type="button">
+                Actualizar tickets
+              </button>
+            </div>
+            <div id="admin-tickets-root"></div>
+          </section>
+
+          <section id="panel-users" class="admin-panel hidden" role="tabpanel" aria-labelledby="tab-users">
+            <div class="admin-panel__header">
+              <h2>Usuarios y Roles</h2>
+              <button id="admin-refresh-users" class="btn btn--outline btn--sm" type="button">
+                Actualizar usuarios
+              </button>
+            </div>
+            <div id="admin-users-root"></div>
+          </section>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer id="footer-root"></footer>
+  <div id="cart-drawer-root"></div>
+  <div id="cookie-banner-root"></div>
+  <div id="cookie-modal-root"></div>
+  <div id="help-widget-root"></div>
+  <div id="toast-root"></div>
+
+  <script type="module" src="../../src/main.js"></script>
+</body>
+</html>
