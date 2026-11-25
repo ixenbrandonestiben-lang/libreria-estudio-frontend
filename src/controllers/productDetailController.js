@@ -9,8 +9,16 @@ export async function initProductDetailController() {
   if (!root) return;
 
   const params = new URLSearchParams(window.location.search);
-  const id = params.get('id') || 'prod-101';
-  const res = await productService.getProductById(id);
+  const rawId = params.get('id');
+  const id = rawId || 'prod-101';
+  let res = await productService.getProductById(id);
+  if ((!res.success || !res.data) && !rawId) {
+    const listRes = await productService.getProducts({ limit: 1, page: 1 });
+    const firstItem = listRes.data?.items?.[0];
+    if (firstItem) {
+      res = { success: true, data: firstItem };
+    }
+  }
   const product = res.data;
 
   clearElement(root);

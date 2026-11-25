@@ -4,7 +4,7 @@
   "description": "Frontend nativo ES6+ accesible y modular para Librería Estudio (estudiantes, padres y docentes)",
   "type": "module",
   "scripts": {
-    "dev": "python3 -m http.server 3000",
+    "dev": "python3 -m http.server 8080",
     "lint": "node scripts/verify.mjs --lint",
     "format": "node scripts/verify.mjs --format",
     "verificar": "node scripts/verify.mjs --all"

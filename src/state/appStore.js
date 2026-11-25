@@ -101,13 +101,21 @@ export const appStore = {
   },
 
   addToCart(product, quantity = 1) {
+    if (!product || product.id === undefined || product.id === null) {
+      return false;
+    }
+    const availableStock = Number.isFinite(Number(product.stock)) ? Number(product.stock) : 20;
+    if (availableStock <= 0) {
+      return false;
+    }
+
     const qty = Math.max(1, Number(quantity) || 1);
-    const existing = state.cart.find((item) => item.id === product.id);
+    const existing = state.cart.find((item) => String(item.id) === String(product.id));
     let nextCart;
     if (existing) {
       nextCart = state.cart.map((item) =>
-        item.id === product.id
-          ? { ...item, qty: Math.min(product.stock || 99, item.qty + qty) }
+        String(item.id) === String(product.id)
+          ? { ...item, stock: availableStock, qty: Math.min(availableStock, item.qty + qty) }
           : item
       );
     } else {
@@ -115,29 +123,32 @@ export const appStore = {
         ...state.cart,
         {
           id: product.id,
-          name: product.name,
-          brand: product.brand,
-          price: Number(product.price),
-          image: product.image,
-          stock: product.stock || 20,
-          qty: Math.min(product.stock || 99, qty),
+          name: product.name || product.title || 'Producto',
+          brand: product.brand || product.brand_name || 'Librería Estudio',
+          price: Number(product.price) || 0,
+          image: product.image || product.image_url || 'src/assets/images/products/cuaderno.svg',
+          stock: availableStock,
+          qty: Math.min(availableStock, qty),
         },
       ];
     }
     this.setCart(nextCart);
+    return true;
   },
 
   updateCartQty(productId, delta) {
     const nextCart = state.cart
-      .map((item) =>
-        item.id === productId ? { ...item, qty: Math.max(0, Math.min(item.stock || 99, item.qty + delta)) } : item
-      )
+      .map((item) => {
+        if (String(item.id) !== String(productId)) return item;
+        const maxStock = Number.isFinite(Number(item.stock)) ? Number(item.stock) : 99;
+        return { ...item, qty: Math.max(0, Math.min(maxStock, item.qty + delta)) };
+      })
       .filter((item) => item.qty > 0);
     this.setCart(nextCart);
   },
 
   removeFromCart(productId) {
-    this.setCart(state.cart.filter((item) => item.id !== productId));
+    this.setCart(state.cart.filter((item) => String(item.id) !== String(productId)));
   },
 
   clearCart() {

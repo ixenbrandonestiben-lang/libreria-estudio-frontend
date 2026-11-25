@@ -1,5 +1,6 @@
 import { appStore } from '../state/appStore.js';
 import { API_BASE_URL, REQUEST_TIMEOUT_MS } from '../utils/constants.js';
+import { getStorageItem, setStorageItem } from '../utils/storageHelper.js';
 
 /**
  * Cliente HTTP nativo con timeout de 10s, soporte AbortSignal y respuesta uniforme { success, message, data, error }.
@@ -31,6 +32,7 @@ export async function apiRequest(endpoint, options = {}) {
   }
 
   const { token } = appStore.getState();
+  const cartToken = getStorageItem('cart_token', null);
   const requestHeaders = {
     Accept: 'application/json',
     ...headers,
@@ -44,6 +46,10 @@ export async function apiRequest(endpoint, options = {}) {
     requestHeaders.Authorization = `Bearer ${token}`;
   }
 
+  if (cartToken && !requestHeaders['X-Cart-Token']) {
+    requestHeaders['X-Cart-Token'] = cartToken;
+  }
+
   const base = API_BASE_URL.replace(/\/+$/, '');
   const path = String(endpoint).startsWith('/') ? endpoint : `/${endpoint}`;
 
@@ -55,18 +61,29 @@ export async function apiRequest(endpoint, options = {}) {
       signal: controller.signal,
     });
 
+    const returnedCartToken = response.headers?.get?.('X-Cart-Token');
+    if (returnedCartToken) {
+      setStorageItem('cart_token', returnedCartToken);
+    }
+
     const payload = await response.json().catch(() => null);
 
     if (!response.ok) {
       return {
         success: false,
-        message: payload?.message || `Error ${response.status} al comunicarse con el servidor`,
+        message:
+          payload?.error?.message ||
+          payload?.message ||
+          `Error ${response.status} al comunicarse con el servidor`,
         data: null,
         error: payload?.error || { status: response.status },
       };
     }
 
     if (payload && typeof payload === 'object' && 'success' in payload) {
+      if (payload.data && typeof payload.data === 'object' && payload.data.cartToken) {
+        setStorageItem('cart_token', payload.data.cartToken);
+      }
       return payload;
     }
 

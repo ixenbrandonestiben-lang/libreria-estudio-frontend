@@ -35,26 +35,51 @@ export function initHelpController(page) {
         }
 
         const order = res.data;
+        const STATUS_LABELS = {
+          pending_payment: 'Pendiente de pago',
+          paid: 'Confirmado / Pagado',
+          processing: 'Empacando útiles',
+          shipped: 'En camino',
+          delivered: 'Entregado',
+          cancelled: 'Cancelado',
+          refunded: 'Reembolsado',
+        };
+        const statusLabel = STATUS_LABELS[order.status] || order.status;
+        const isClosedStatus = order.status === 'cancelled' || order.status === 'refunded';
         const steps = ['Confirmado', 'Empacando útiles', 'En camino', 'Entregado'];
-        const activeIdx = order.status === 'Entregado' ? 3 : order.status === 'En camino' ? 2 : 1;
+        const activeIdx =
+          order.status === 'delivered' || order.status === 'Entregado'
+            ? 3
+            : order.status === 'shipped' || order.status === 'En camino'
+              ? 2
+              : order.status === 'processing' || order.status === 'Empacando útiles'
+                ? 1
+                : order.status === 'pending_payment'
+                  ? -1
+                  : 0;
 
         resultRoot.appendChild(
           createElement('div', { className: 'card' }, [
             createElement('h2', { text: `Pedido ${order.id}` }),
             createElement('p', {
               className: 'text-sm',
-              text: `Estado: ${order.status} · Fecha: ${formatDate(order.createdAt)} · Total: ${formatCurrency(order.total)}`,
+              text: `Estado: ${statusLabel} · Fecha: ${formatDate(order.createdAt)} · Total: ${formatCurrency(order.total)}`,
             }),
-            createElement(
-              'div',
-              { className: 'timeline' },
-              steps.map((step, idx) =>
-                createElement('div', {
-                  className: `timeline__step${idx <= activeIdx ? ' timeline__step--done' : ''}`,
-                  text: `${idx <= activeIdx ? '✓ ' : ''}${step}`,
+            isClosedStatus
+              ? createElement('p', {
+                  className: 'text-danger text-sm',
+                  text: `Este pedido se encuentra en estado: ${statusLabel}.`,
                 })
-              )
-            ),
+              : createElement(
+                  'div',
+                  { className: 'timeline' },
+                  steps.map((step, idx) =>
+                    createElement('div', {
+                      className: `timeline__step${idx <= activeIdx ? ' timeline__step--done' : ''}`,
+                      text: `${idx <= activeIdx ? '✓ ' : ''}${step}`,
+                    })
+                  )
+                ),
           ])
         );
       });
@@ -83,19 +108,26 @@ export function initHelpController(page) {
     ticketForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       const data = new FormData(ticketForm);
-      const email = String(data.get('email') || '');
-      const subject = String(data.get('subject') || '');
-      const message = String(data.get('message') || '');
+      const email = String(data.get('email') || '').trim();
+      const subject = String(data.get('subject') || '').trim();
+      const message = String(data.get('message') || '').trim();
 
-      if (!isValidEmail(email) || !isRequired(subject) || !isRequired(message)) {
-        setSafeText(ticketStatus, 'Completa tu correo, asunto y descripción del problema.');
+      if (!isValidEmail(email) || !isRequired(subject) || subject.length < 4 || message.length < 10) {
+        setSafeText(
+          ticketStatus,
+          'Completa tu correo, un asunto (mín. 4 caracteres) y un mensaje detallado (mín. 10 caracteres).'
+        );
         return;
       }
 
       const res = await supportService.createTicket({ email, subject, message });
       setSafeText(ticketStatus, res.message);
-      ticketForm.reset();
-      appStore.showToast('Ticket de soporte enviado.', 'success');
+      if (res.success) {
+        ticketForm.reset();
+        appStore.showToast('Ticket de soporte enviado.', 'success');
+      } else {
+        appStore.showToast(res.message || 'No se pudo enviar el ticket.', 'danger');
+      }
     });
   }
 }

@@ -73,7 +73,9 @@ export function initAuthController(page) {
       }
       const res = await authService.forgotPassword(email);
       setSafeText(feedbackEl, res.message);
-      appStore.showToast('Solicitud de recuperación enviada.', 'info');
+      if (res.success) {
+        appStore.showToast('Solicitud de recuperación enviada.', 'info');
+      }
     });
   }
 }
