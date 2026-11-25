@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Centro de Ayuda | Librería Estudio</title>
+  <link rel="icon" type="image/svg+xml" href="../../src/assets/images/favicon.svg">
+  <link rel="stylesheet" href="../../src/assets/css/variables.css">
+  <link rel="stylesheet" href="../../src/assets/css/reset.css">
+  <link rel="stylesheet" href="../../src/assets/css/base.css">
+  <link rel="stylesheet" href="../../src/assets/css/layout.css">
+  <link rel="stylesheet" href="../../src/assets/css/hero-scroll.css">
+  <link rel="stylesheet" href="../../src/assets/css/components.css">
+  <link rel="stylesheet" href="../../src/assets/css/pages.css">
+</head>
+<body data-page="help">
+  <a class="skip-link" href="#main-content">Saltar al contenido principal</a>
+  <header id="navbar-root"></header>
+
+  <main id="main-content">
+    <section class="page-header">
+      <div class="container">
+        <h1>Centro de Ayuda y Soporte</h1>
+        <p>Respuestas rápidas sobre listas escolares, facturación, envíos y tickets de atención.</p>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container two-col-layout">
+        <div>
+          <h2>Preguntas Frecuentes</h2>
+          <div id="faq-list-root" class="grid"></div>
+        </div>
+
+        <form id="support-ticket-form" class="card" novalidate>
+          <h2>Enviar ticket de soporte</h2>
+          <div class="form-group">
+            <label for="ticket-email" class="form-label">Tu correo electrónico</label>
+            <input id="ticket-email" name="email" class="form-input" type="email" required>
+          </div>
+          <div class="form-group">
+            <label for="ticket-subject" class="form-label">Asunto</label>
+            <input id="ticket-subject" name="subject" class="form-input" type="text" required placeholder="Ej. Duda sobre pedido o lista escolar">
+          </div>
+          <div class="form-group">
+            <label for="ticket-message" class="form-label">Mensaje</label>
+            <textarea id="ticket-message" name="message" class="form-textarea" rows="4" required></textarea>
+          </div>
+          <p id="ticket-status" class="text-sm" role="status"></p>
+          <button class="btn btn--primary btn--full" type="submit">Crear ticket</button>
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <footer id="footer-root"></footer>
+  <div id="cart-drawer-root"></div>
+  <div id="cookie-banner-root"></div>
+  <div id="cookie-modal-root"></div>
+  <div id="help-widget-root"></div>
+  <div id="toast-root"></div>
+
+  <script type="module" src="../../src/main.js"></script>
+</body>
+</html>

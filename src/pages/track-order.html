@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rastrear Pedido | Librería Estudio</title>
+  <link rel="icon" type="image/svg+xml" href="../../src/assets/images/favicon.svg">
+  <link rel="stylesheet" href="../../src/assets/css/variables.css">
+  <link rel="stylesheet" href="../../src/assets/css/reset.css">
+  <link rel="stylesheet" href="../../src/assets/css/base.css">
+  <link rel="stylesheet" href="../../src/assets/css/layout.css">
+  <link rel="stylesheet" href="../../src/assets/css/hero-scroll.css">
+  <link rel="stylesheet" href="../../src/assets/css/components.css">
+  <link rel="stylesheet" href="../../src/assets/css/pages.css">
+</head>
+<body data-page="track-order">
+  <a class="skip-link" href="#main-content">Saltar al contenido principal</a>
+  <header id="navbar-root"></header>
+
+  <main id="main-content">
+    <section class="page-header">
+      <div class="container">
+        <h1>Rastrear Pedido</h1>
+        <p>Ingresa tu código de pedido (ej. LE-2026-0842) para ver el estado en tiempo real.</p>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container">
+        <form id="track-order-form" class="card grid grid--3" novalidate>
+          <div class="form-group">
+            <label for="track-code" class="form-label">Código de pedido</label>
+            <input id="track-code" name="code" class="form-input" type="text" required placeholder="LE-2026-0842">
+          </div>
+          <div class="form-group">
+            <label for="track-email" class="form-label">Correo electrónico (opcional)</label>
+            <input id="track-email" name="email" class="form-input" type="email" placeholder="familia@ejemplo.mx">
+          </div>
+          <div class="form-group">
+            <span class="form-label">&nbsp;</span>
+            <button class="btn btn--primary btn--full" type="submit">Consultar estado</button>
+          </div>
+        </form>
+
+        <div id="track-result-root"></div>
+      </div>
+    </section>
+  </main>
+
+  <footer id="footer-root"></footer>
+  <div id="cart-drawer-root"></div>
+  <div id="cookie-banner-root"></div>
+  <div id="cookie-modal-root"></div>
+  <div id="help-widget-root"></div>
+  <div id="toast-root"></div>
+
+  <script type="module" src="../../src/main.js"></script>
+</body>
+</html>

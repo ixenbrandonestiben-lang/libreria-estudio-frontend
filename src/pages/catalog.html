@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Catálogo | Librería Estudio</title>
+  <link rel="icon" type="image/svg+xml" href="../../src/assets/images/favicon.svg">
+  <link rel="stylesheet" href="../../src/assets/css/variables.css">
+  <link rel="stylesheet" href="../../src/assets/css/reset.css">
+  <link rel="stylesheet" href="../../src/assets/css/base.css">
+  <link rel="stylesheet" href="../../src/assets/css/layout.css">
+  <link rel="stylesheet" href="../../src/assets/css/hero-scroll.css">
+  <link rel="stylesheet" href="../../src/assets/css/components.css">
+  <link rel="stylesheet" href="../../src/assets/css/pages.css">
+</head>
+<body data-page="catalog">
+  <a class="skip-link" href="#main-content">Saltar al contenido principal</a>
+  <header id="navbar-root"></header>
+
+  <main id="main-content">
+    <section class="page-header">
+      <div class="container">
+        <nav class="breadcrumb" aria-label="Ruta de navegación">
+          <a href="../../index.html">Inicio</a>
+          <span aria-hidden="true">/</span>
+          <span>Catálogo</span>
+        </nav>
+        <h1>Catálogo de Papelería y Útiles</h1>
+        <p>Filtra por categoría, marca, nivel escolar o disponibilidad inmediata.</p>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container catalog-layout">
+        <div id="filter-sidebar-root"></div>
+
+        <div>
+          <div class="catalog-toolbar">
+            <div class="navbar__actions">
+              <button id="toggle-mobile-filters" class="btn btn--outline btn--sm catalog-mobile-filter-btn" type="button">
+                Filtros
+              </button>
+              <span id="catalog-count" class="text-sm text-muted">Cargando...</span>
+            </div>
+            <div>
+              <label for="catalog-sort" class="sr-only">Ordenar productos</label>
+              <select id="catalog-sort" class="form-select">
+                <option value="featured">Destacados</option>
+                <option value="price_asc">Menor precio</option>
+                <option value="price_desc">Mayor precio</option>
+                <option value="name_asc">Nombre (A-Z)</option>
+              </select>
+            </div>
+          </div>
+
+          <div id="catalog-grid-root" class="grid grid--3"></div>
+          <div id="catalog-pagination-root"></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer id="footer-root"></footer>
+  <div id="cart-drawer-root"></div>
+  <div id="cookie-banner-root"></div>
+  <div id="cookie-modal-root"></div>
+  <div id="help-widget-root"></div>
+  <div id="toast-root"></div>
+
+  <script type="module" src="../../src/main.js"></script>
+</body>
+</html>

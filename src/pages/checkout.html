@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Finalizar Compra | Librería Estudio</title>
+  <link rel="icon" type="image/svg+xml" href="../../src/assets/images/favicon.svg">
+  <link rel="stylesheet" href="../../src/assets/css/variables.css">
+  <link rel="stylesheet" href="../../src/assets/css/reset.css">
+  <link rel="stylesheet" href="../../src/assets/css/base.css">
+  <link rel="stylesheet" href="../../src/assets/css/layout.css">
+  <link rel="stylesheet" href="../../src/assets/css/hero-scroll.css">
+  <link rel="stylesheet" href="../../src/assets/css/components.css">
+  <link rel="stylesheet" href="../../src/assets/css/pages.css">
+</head>
+<body data-page="checkout">
+  <a class="skip-link" href="#main-content">Saltar al contenido principal</a>
+  <header id="navbar-root"></header>
+
+  <main id="main-content">
+    <section class="page-header">
+      <div class="container">
+        <h1>Finalizar Compra</h1>
+        <p>Completa tus datos de entrega y confirma tu pedido antes de que expire la reserva.</p>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container two-col-layout">
+        <form id="checkout-form" class="card" novalidate>
+          <h2>Datos de envío y pago</h2>
+
+          <div class="form-group">
+            <label for="checkout-name" class="form-label">Nombre completo</label>
+            <input id="checkout-name" name="fullName" class="form-input" type="text" required autocomplete="name">
+          </div>
+
+          <div class="grid grid--2">
+            <div class="form-group">
+              <label for="checkout-email" class="form-label">Correo electrónico</label>
+              <input id="checkout-email" name="email" class="form-input" type="email" required autocomplete="email">
+            </div>
+            <div class="form-group">
+              <label for="checkout-phone" class="form-label">Teléfono (10 dígitos)</label>
+              <input id="checkout-phone" name="phone" class="form-input" type="tel" required autocomplete="tel">
+            </div>
+          </div>
+
+          <div class="grid grid--2">
+            <div class="form-group">
+              <label for="checkout-street" class="form-label">Calle, número y colonia</label>
+              <input id="checkout-street" name="street" class="form-input" type="text" required autocomplete="street-address">
+            </div>
+            <div class="form-group">
+              <label for="checkout-cp" class="form-label">Código postal</label>
+              <input id="checkout-cp" name="postalCode" class="form-input" type="text" required maxlength="5" autocomplete="postal-code">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="checkout-payment" class="form-label">Método de pago</label>
+            <select id="checkout-payment" name="paymentMethod" class="form-select">
+              <option value="card">Tarjeta de crédito o débito</option>
+              <option value="transfer">Transferencia SPEI</option>
+              <option value="cash">Pago en efectivo al recibir</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-check">
+              <input type="checkbox" name="requiresInvoice">
+              <span>Requiero factura electrónica (CFDI)</span>
+            </label>
+          </div>
+
+          <div class="form-group">
+            <label class="form-check">
+              <input type="checkbox" name="termsAccepted" required>
+              <span>He leído y acepto los <a href="./terms.html" class="navbar__link">Términos y Condiciones</a> y el <a href="./privacy.html" class="navbar__link">Aviso de Privacidad</a>.</span>
+            </label>
+          </div>
+
+          <p id="checkout-error" class="form-error" role="alert"></p>
+
+          <button class="btn btn--primary btn--lg btn--full" type="submit">Confirmar pedido</button>
+        </form>
+
+        <aside class="card">
+          <h2>Resumen de pedido</h2>
+          <div id="checkout-timer-root" class="form-group"></div>
+          <div id="checkout-summary-root" class="modal__body"></div>
+        </aside>
+      </div>
+    </section>
+  </main>
+
+  <footer id="footer-root"></footer>
+  <div id="cart-drawer-root"></div>
+  <div id="cookie-banner-root"></div>
+  <div id="cookie-modal-root"></div>
+  <div id="help-widget-root"></div>
+  <div id="toast-root"></div>
+
+  <script type="module" src="../../src/main.js"></script>
+</body>
+</html>
