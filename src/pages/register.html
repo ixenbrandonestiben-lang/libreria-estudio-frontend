@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Crear Cuenta | Librería Estudio</title>
+  <link rel="icon" type="image/svg+xml" href="../../src/assets/images/favicon.svg">
+  <link rel="stylesheet" href="../../src/assets/css/variables.css">
+  <link rel="stylesheet" href="../../src/assets/css/reset.css">
+  <link rel="stylesheet" href="../../src/assets/css/base.css">
+  <link rel="stylesheet" href="../../src/assets/css/layout.css">
+  <link rel="stylesheet" href="../../src/assets/css/hero-scroll.css">
+  <link rel="stylesheet" href="../../src/assets/css/components.css">
+  <link rel="stylesheet" href="../../src/assets/css/pages.css">
+</head>
+<body data-page="register">
+  <a class="skip-link" href="#main-content">Saltar al contenido principal</a>
+  <header id="navbar-root"></header>
+
+  <main id="main-content">
+    <section class="section">
+      <div class="container auth-wrap">
+        <form id="register-form" class="card" novalidate>
+          <h1>Crear Cuenta</h1>
+          <p class="text-sm">Guarda tus listas escolares y recibe seguimiento de tus envíos.</p>
+
+          <div class="form-group">
+            <label for="reg-name" class="form-label">Nombre completo</label>
+            <input id="reg-name" name="name" class="form-input" type="text" required autocomplete="name">
+          </div>
+
+          <div class="form-group">
+            <label for="reg-email" class="form-label">Correo electrónico</label>
+            <input id="reg-email" name="email" class="form-input" type="email" required autocomplete="email">
+          </div>
+
+          <div class="form-group">
+            <label for="reg-role" class="form-label">Perfil</label>
+            <select id="reg-role" name="role" class="form-select">
+              <option value="Padre de familia">Padre / Madre de familia</option>
+              <option value="Estudiante">Estudiante</option>
+              <option value="Docente">Docente / Escuela</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="reg-password" class="form-label">Contraseña (mín. 8 caracteres, letras y números)</label>
+            <input id="reg-password" name="password" class="form-input" type="password" required autocomplete="new-password">
+          </div>
+
+          <p id="auth-feedback" class="form-error" role="alert"></p>
+
+          <button class="btn btn--primary btn--full" type="submit">Registrarme</button>
+
+          <p class="text-sm">
+            ¿Ya tienes cuenta? <a class="navbar__link" href="./login.html">Inicia sesión aquí</a>.
+          </p>
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <footer id="footer-root"></footer>
+  <div id="cart-drawer-root"></div>
+  <div id="cookie-banner-root"></div>
+  <div id="cookie-modal-root"></div>
+  <div id="help-widget-root"></div>
+  <div id="toast-root"></div>
+
+  <script type="module" src="../../src/main.js"></script>
+</body>
+</html>
