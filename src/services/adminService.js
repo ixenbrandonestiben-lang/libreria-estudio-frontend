@@ -72,12 +72,15 @@ function normalizeProduct(item) {
     id: item.id,
     sku: item.sku || '',
     name: item.title || item.name || 'Producto sin nombre',
-    brand: item.brand_name || item.brand || 'Librería Estudio',
-    category: item.category_slug || item.category || 'cuadernos',
+    brand: item.brand_name || item.brand || item.brandName || 'Librería Estudio',
+    category: item.category_slug || item.category || item.categorySlug || 'cuadernos',
     price: Number(item.price ?? 0),
-    stock: Number(item.stock_available ?? item.stock ?? 0),
+    stock: Number(item.stock_available ?? item.stock ?? item.stockAvailable ?? 0),
+    unitLabel: item.unit_label || item.unitLabel || 'unidad',
+    unitsPerPack: Number(item.units_per_pack ?? item.unitsPerPack ?? 1),
     isActive: item.is_active !== undefined ? Boolean(item.is_active) : item.isActive !== false,
-    description: item.description || '',
+    description: item.short_description || item.shortDescription || item.description || '',
+    attributes: Array.isArray(item.attributes) ? item.attributes : [],
   };
 }
 
@@ -165,10 +168,180 @@ function getDemoUsers() {
   return DEFAULT_DEMO_USERS.map(normalizeUser);
 }
 
+function normalizeAnalytics(raw) {
+  const data = raw && typeof raw === 'object' ? raw : {};
+  const rawKpis = data.kpis && typeof data.kpis === 'object' ? data.kpis : data;
+
+  const totalOrders = Number(rawKpis.totalOrders ?? rawKpis.total_orders ?? 0);
+  const totalRevenue = Number(rawKpis.totalRevenue ?? rawKpis.total_revenue ?? 0);
+  const averageTicket =
+    rawKpis.averageTicket !== undefined || rawKpis.average_ticket !== undefined
+      ? Number(rawKpis.averageTicket ?? rawKpis.average_ticket ?? 0)
+      : totalOrders > 0
+        ? totalRevenue / totalOrders
+        : 0;
+
+  const topProductsRaw = Array.isArray(data.topProducts)
+    ? data.topProducts
+    : Array.isArray(data.top_products)
+      ? data.top_products
+      : [];
+
+  const topProducts = topProductsRaw.map((item) => ({
+    sku: item.sku || '—',
+    title: item.title || item.name || 'Producto',
+    unitsSold: Number(item.unitsSold ?? item.units_sold ?? item.quantity ?? 0),
+    revenue: Number(item.revenue ?? item.total_revenue ?? 0),
+  }));
+
+  const lowStockRaw = Array.isArray(data.lowStockAlerts)
+    ? data.lowStockAlerts
+    : Array.isArray(data.low_stock_alerts)
+      ? data.low_stock_alerts
+      : [];
+
+  const lowStockAlerts = lowStockRaw.map((item) => ({
+    id: item.id,
+    sku: item.sku || '—',
+    title: item.title || item.name || 'Producto',
+    stockAvailable: Number(item.stockAvailable ?? item.stock_available ?? item.stock ?? 0),
+  }));
+
+  const statusSource = data.ordersByStatus ?? data.orders_by_status ?? [];
+  let ordersByStatus = [];
+  if (Array.isArray(statusSource)) {
+    ordersByStatus = statusSource.map((item) => ({
+      status: item.status || 'paid',
+      count: Number(item.count ?? item.total_orders ?? 0),
+      total: Number(item.total ?? item.total_amount ?? 0),
+    }));
+  } else if (statusSource && typeof statusSource === 'object') {
+    ordersByStatus = Object.entries(statusSource).map(([status, val]) => {
+      if (val && typeof val === 'object') {
+        return {
+          status,
+          count: Number(val.count ?? 0),
+          total: Number(val.total ?? 0),
+        };
+      }
+      return { status, count: Number(val ?? 0), total: 0 };
+    });
+  }
+
+  return {
+    kpis: {
+      totalRevenue,
+      totalOrders,
+      averageTicket,
+      ordersToDispatch: Number(rawKpis.ordersToDispatch ?? rawKpis.orders_to_dispatch ?? 0),
+      openTickets: Number(rawKpis.openTickets ?? rawKpis.open_tickets ?? 0),
+      registeredUsers: Number(rawKpis.registeredUsers ?? rawKpis.registered_users ?? 0),
+    },
+    topProducts,
+    lowStockAlerts,
+    ordersByStatus,
+  };
+}
+
+function getDemoAnalytics() {
+  const products = getDemoProducts();
+  const orders = getDemoOrders();
+  const tickets = getDemoTickets();
+  const users = getDemoUsers();
+
+  const hasOrders = orders.length > 0;
+  const totalOrders = hasOrders ? orders.length : 18;
+  const totalRevenue = hasOrders
+    ? orders.reduce((sum, o) => sum + Number(o.total || 0), 0)
+    : 14850.5;
+  const averageTicket = totalOrders > 0 ? totalRevenue / totalOrders : 0;
+
+  const ordersToDispatch = hasOrders
+    ? orders.filter((o) => o.status === 'paid' || o.status === 'processing').length
+    : 5;
+
+  const openTickets = tickets.filter(
+    (t) => t.status === 'open' || t.status === 'in_progress'
+  ).length;
+
+  const lowStockAlerts = products
+    .filter((p) => Number(p.stock) <= 15)
+    .map((p) => ({
+      id: p.id,
+      sku: p.sku || '—',
+      title: p.name,
+      stockAvailable: Number(p.stock),
+    }));
+
+  const ordersByStatus = hasOrders
+    ? ORDER_STATUS_OPTIONS.map((status) => {
+        const matching = orders.filter((o) => o.status === status);
+        return {
+          status,
+          count: matching.length,
+          total: matching.reduce((sum, o) => sum + Number(o.total || 0), 0),
+        };
+      }).filter((entry) => entry.count > 0)
+    : [
+        { status: 'paid', count: 3, total: 2450 },
+        { status: 'processing', count: 2, total: 1890 },
+        { status: 'shipped', count: 4, total: 3620 },
+        { status: 'delivered', count: 8, total: 6410.5 },
+        { status: 'cancelled', count: 1, total: 480 },
+      ];
+
+  const topProducts = products.slice(0, 5).map((p, idx) => {
+    const unitsSold = Math.max(4, 32 - idx * 6);
+    return {
+      sku: p.sku || `SKU-0${idx + 1}`,
+      title: p.name,
+      unitsSold,
+      revenue: Number((unitsSold * Number(p.price || 0)).toFixed(2)),
+    };
+  });
+
+  return normalizeAnalytics({
+    kpis: {
+      totalRevenue,
+      totalOrders,
+      averageTicket,
+      ordersToDispatch,
+      openTickets,
+      registeredUsers: users.length,
+    },
+    topProducts,
+    lowStockAlerts,
+    ordersByStatus,
+  });
+}
+
 export const adminService = {
   async isBackendOffline() {
     const res = await apiRequest('/health', { timeoutMs: 2500 });
     return res.error?.code === 'NETWORK_OFFLINE';
+  },
+
+  async getAnalytics() {
+    const res = await apiRequest('/admin/analytics');
+    if (res.success && res.data) {
+      return {
+        ...res,
+        data: normalizeAnalytics(res.data),
+        isDemo: false,
+      };
+    }
+
+    if (res.error?.code === 'NETWORK_OFFLINE') {
+      return {
+        success: true,
+        message: 'Resumen analítico cargado en modo demostración local',
+        data: getDemoAnalytics(),
+        error: null,
+        isDemo: true,
+      };
+    }
+
+    return res;
   },
 
   async getProducts() {
@@ -195,6 +368,12 @@ export const adminService = {
   },
 
   async createProduct(payload) {
+    const shortDescription = String(payload.shortDescription ?? payload.description ?? '').trim();
+    const unitsPerPack = Number(payload.unitsPerPack ?? payload.units_per_pack ?? 1);
+    const attributes = Array.isArray(payload.attributes)
+      ? payload.attributes.filter((a) => a && a.key && String(a.value || '').trim() !== '')
+      : [];
+
     const body = {
       sku: String(payload.sku || '').trim(),
       title: String(payload.title || payload.name || '').trim(),
@@ -202,8 +381,12 @@ export const adminService = {
       categorySlug: String(payload.categorySlug || payload.category || 'cuadernos').trim(),
       price: Number(payload.price),
       stockAvailable: Number(payload.stockAvailable ?? payload.stock ?? 0),
-      description: String(payload.description || '').trim(),
+      unitLabel: String(payload.unitLabel || payload.unit_label || 'unidad').trim(),
+      unitsPerPack: Number.isFinite(unitsPerPack) && unitsPerPack >= 1 ? Math.floor(unitsPerPack) : 1,
+      shortDescription,
+      description: shortDescription,
       isActive: payload.isActive !== false,
+      attributes,
     };
 
     const res = await apiRequest('/admin/products', {

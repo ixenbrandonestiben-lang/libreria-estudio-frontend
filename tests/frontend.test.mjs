@@ -529,4 +529,80 @@ describe('adminService & Admin Navbar regression', () => {
       assert.equal(updatedUser.data.isActive, false);
     });
   });
+
+  it('adminService.getAnalytics() consumes /admin/analytics and normalizes KPIs, topProducts, lowStockAlerts and ordersByStatus', async () => {
+    await withDomMocks(async () => {
+      let requestedUrl = '';
+      globalThis.fetch = async (url) => {
+        requestedUrl = String(url);
+        return {
+          ok: true,
+          status: 200,
+          headers: { get: () => null },
+          json: async () => ({
+            success: true,
+            data: {
+              kpis: {
+                total_revenue: 24500.75,
+                total_orders: 25,
+                average_ticket: 980.03,
+                orders_to_dispatch: 4,
+                open_tickets: 2,
+                registered_users: 42,
+              },
+              top_products: [
+                { sku: 'CUA-100', title: 'Cuaderno Profesional', units_sold: 45, revenue: 3150 },
+              ],
+              low_stock_alerts: [
+                { id: 9, sku: 'LAP-HB', title: 'Lápiz HB x12', stock_available: 8 },
+              ],
+              orders_by_status: [
+                { status: 'paid', count: 4, total: 3920 },
+                { status: 'delivered', count: 21, total: 20580.75 },
+              ],
+            },
+          }),
+        };
+      };
+
+      const { adminService } = await import('../src/services/adminService.js');
+      const res = await adminService.getAnalytics();
+
+      assert.match(requestedUrl, /\/admin\/analytics$/);
+      assert.equal(res.success, true);
+      assert.equal(res.isDemo, false);
+      assert.equal(res.data.kpis.totalRevenue, 24500.75);
+      assert.equal(res.data.kpis.totalOrders, 25);
+      assert.equal(res.data.kpis.averageTicket, 980.03);
+      assert.equal(res.data.kpis.ordersToDispatch, 4);
+      assert.equal(res.data.kpis.openTickets, 2);
+      assert.equal(res.data.kpis.registeredUsers, 42);
+      assert.equal(res.data.topProducts[0].sku, 'CUA-100');
+      assert.equal(res.data.topProducts[0].unitsSold, 45);
+      assert.equal(res.data.lowStockAlerts[0].stockAvailable, 8);
+      assert.equal(res.data.ordersByStatus.length, 2);
+    });
+  });
+
+  it('adminService.getAnalytics() falls back to realistic demo metrics when NETWORK_OFFLINE', async () => {
+    await withDomMocks(async () => {
+      globalThis.fetch = async () => {
+        throw new Error('offline');
+      };
+
+      const { adminService } = await import('../src/services/adminService.js');
+      const res = await adminService.getAnalytics();
+
+      assert.equal(res.success, true);
+      assert.equal(res.isDemo, true);
+      assert.ok(res.data.kpis.totalRevenue > 0);
+      assert.ok(res.data.kpis.totalOrders > 0);
+      assert.ok(res.data.kpis.registeredUsers > 0);
+      assert.ok(Array.isArray(res.data.topProducts));
+      assert.ok(res.data.topProducts.length > 0);
+      assert.ok(Array.isArray(res.data.lowStockAlerts));
+      assert.ok(Array.isArray(res.data.ordersByStatus));
+      assert.ok(res.data.ordersByStatus.length > 0);
+    });
+  });
 });

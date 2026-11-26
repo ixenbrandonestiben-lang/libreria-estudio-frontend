@@ -5,6 +5,7 @@ import {
   adminService,
 } from '../services/adminService.js';
 import { authService } from '../services/authService.js';
+import { productService } from '../services/productService.js';
 import { appStore } from '../state/appStore.js';
 import { clearElement, createElement, setSafeText } from '../utils/domSanitizer.js';
 import { formatCurrency, formatDate } from '../utils/formatters.js';
@@ -52,6 +53,7 @@ export async function initAdminController() {
   const workspace = document.getElementById('admin-workspace');
   const demoBanner = document.getElementById('admin-demo-banner');
 
+  const analyticsRoot = document.getElementById('admin-analytics-root');
   const productsRoot = document.getElementById('admin-products-root');
   const ordersRoot = document.getElementById('admin-orders-root');
   const ticketsRoot = document.getElementById('admin-tickets-root');
@@ -59,7 +61,10 @@ export async function initAdminController() {
 
   const createProductForm = document.getElementById('admin-create-product-form');
   const productError = document.getElementById('admin-product-error');
+  const prodCategorySelect = document.getElementById('prod-category');
+  const prodBrandSelect = document.getElementById('prod-brand');
 
+  const refreshAnalyticsBtn = document.getElementById('admin-refresh-analytics');
   const refreshProductsBtn = document.getElementById('admin-refresh-products');
   const refreshOrdersBtn = document.getElementById('admin-refresh-orders');
   const refreshTicketsBtn = document.getElementById('admin-refresh-tickets');
@@ -67,13 +72,14 @@ export async function initAdminController() {
 
   const tabButtons = Array.from(document.querySelectorAll('.admin-tab'));
   const tabPanels = {
+    analytics: document.getElementById('panel-analytics'),
     products: document.getElementById('panel-products'),
     orders: document.getElementById('panel-orders'),
     tickets: document.getElementById('panel-tickets'),
     users: document.getElementById('panel-users'),
   };
 
-  let activeTab = 'products';
+  let activeTab = 'analytics';
   let demoMode = false;
 
   function showDemoBannerIfNeeded(isDemo) {
@@ -106,6 +112,229 @@ export async function initAdminController() {
     return createElement('div', { className: 'admin-table-wrap' }, [
       createElement('table', { className: 'admin-table' }, [thead, tbody]),
     ]);
+  }
+
+  function buildKpiCard(label, value, hint = '', tone = 'default') {
+    const cardClass =
+      tone === 'warning'
+        ? 'card admin-kpi-card admin-kpi-card--warning'
+        : tone === 'primary'
+          ? 'card admin-kpi-card admin-kpi-card--primary'
+          : 'card admin-kpi-card';
+    const children = [
+      createElement('span', { className: 'admin-kpi-card__label', text: label }),
+      createElement('strong', { className: 'admin-kpi-card__value', text: value }),
+    ];
+    if (hint) {
+      children.push(createElement('span', { className: 'text-xs admin-kpi-card__hint', text: hint }));
+    }
+    return createElement('article', { className: cardClass }, children);
+  }
+
+  async function loadAnalytics() {
+    if (!analyticsRoot) return;
+    setSafeText(analyticsRoot, 'Cargando resumen y métricas...');
+    const res = await adminService.getAnalytics();
+    showDemoBannerIfNeeded(res.isDemo);
+
+    if (!res.success || !res.data) {
+      renderEmptyState(analyticsRoot, res.message || 'No se pudieron cargar las métricas.');
+      return;
+    }
+
+    const { kpis, topProducts, lowStockAlerts, ordersByStatus } = res.data;
+
+    const kpiGrid = createElement('div', { className: 'admin-kpi-grid' }, [
+      buildKpiCard('Ingresos Totales', formatCurrency(kpis.totalRevenue), 'Ventas acumuladas', 'primary'),
+      buildKpiCard('Órdenes Totales', String(kpis.totalOrders), 'Pedidos registrados'),
+      buildKpiCard('Ticket Promedio', formatCurrency(kpis.averageTicket), 'Promedio por orden'),
+      buildKpiCard(
+        'Órdenes por Despachar',
+        String(kpis.ordersToDispatch),
+        'Pagadas o en preparación',
+        kpis.ordersToDispatch > 0 ? 'warning' : 'default'
+      ),
+      buildKpiCard(
+        'Tickets Abiertos',
+        String(kpis.openTickets),
+        'Pendientes de atención',
+        kpis.openTickets > 0 ? 'warning' : 'default'
+      ),
+      buildKpiCard('Usuarios Registrados', String(kpis.registeredUsers), 'Cuentas activas e inactivas'),
+    ]);
+
+    const topProductsCard = createElement('section', { className: 'card admin-analytics-card' }, [
+      createElement('div', { className: 'admin-panel__header' }, [
+        createElement('h3', { text: 'Top Productos Más Demandados' }),
+      ]),
+      topProducts.length > 0
+        ? buildTable(
+            ['#', 'SKU', 'Producto', 'Unidades Vendidas', 'Ingresos'],
+            topProducts.map((item, index) =>
+              createElement('tr', {}, [
+                createElement('td', { text: String(index + 1) }),
+                createElement('td', { text: item.sku }),
+                createElement('td', {}, [createElement('strong', { text: item.title })]),
+                createElement('td', { text: String(item.unitsSold) }),
+                createElement('td', { text: formatCurrency(item.revenue) }),
+              ])
+            )
+          )
+        : createElement('p', {
+            className: 'text-sm',
+            text: 'Aún no hay ventas suficientes para generar el ranking.',
+          }),
+    ]);
+
+    const statusList =
+      ordersByStatus.length > 0
+        ? createElement(
+            'ul',
+            { className: 'admin-status-list' },
+            ordersByStatus.map((entry) =>
+              createElement('li', { className: 'admin-status-item' }, [
+                createElement('div', { className: 'admin-status-item__info' }, [
+                  createElement('span', {
+                    className: getOrderBadgeClass(entry.status),
+                    text: ORDER_STATUS_LABELS[entry.status] || entry.status,
+                  }),
+                  createElement('span', {
+                    className: 'text-sm',
+                    text: `${entry.count} ${entry.count === 1 ? 'orden' : 'órdenes'}`,
+                  }),
+                ]),
+                createElement('strong', {
+                  className: 'text-sm',
+                  text: formatCurrency(entry.total),
+                }),
+              ])
+            )
+          )
+        : createElement('p', {
+            className: 'text-sm',
+            text: 'Sin órdenes registradas por estado.',
+          });
+
+    const ordersStatusCard = createElement('section', { className: 'card admin-analytics-card' }, [
+      createElement('div', { className: 'admin-panel__header' }, [
+        createElement('h3', { text: 'Estado de Órdenes' }),
+        createElement('button', {
+          className: 'btn btn--outline btn--sm',
+          text: 'Ver órdenes',
+          attrs: { type: 'button' },
+          events: {
+            click: () => switchTab('orders'),
+          },
+        }),
+      ]),
+      statusList,
+    ]);
+
+    const analyticsGrid = createElement('div', { className: 'admin-analytics-grid' }, [
+      topProductsCard,
+      ordersStatusCard,
+    ]);
+
+    const lowStockCard = createElement('section', { className: 'card admin-analytics-card' }, [
+      createElement('div', { className: 'admin-panel__header' }, [
+        createElement('div', {}, [
+          createElement('h3', { text: 'Alertas de Stock Bajo' }),
+          createElement('p', {
+            className: 'text-xs',
+            text: 'Productos con inventario disponible menor o igual a 15 unidades.',
+          }),
+        ]),
+        createElement('button', {
+          className: 'btn btn--primary btn--sm',
+          text: 'Ir a Productos',
+          attrs: { type: 'button' },
+          events: {
+            click: () => switchTab('products'),
+          },
+        }),
+      ]),
+      lowStockAlerts.length > 0
+        ? buildTable(
+            ['SKU', 'Producto', 'Stock Disponible', 'Acción'],
+            lowStockAlerts.map((item) =>
+              createElement('tr', {}, [
+                createElement('td', { text: item.sku }),
+                createElement('td', {}, [createElement('strong', { text: item.title })]),
+                createElement('td', {}, [
+                  createElement('span', {
+                    className:
+                      item.stockAvailable <= 5 ? 'badge badge--danger' : 'badge badge--warning',
+                    text: `${item.stockAvailable} uds.`,
+                  }),
+                ]),
+                createElement('td', {}, [
+                  createElement('button', {
+                    className: 'btn btn--outline btn--sm',
+                    text: 'Reabastecer',
+                    attrs: { type: 'button' },
+                    events: {
+                      click: () => switchTab('products'),
+                    },
+                  }),
+                ]),
+              ])
+            )
+          )
+        : createElement('p', {
+            className: 'text-sm',
+            text: 'Todo el inventario se encuentra por encima del umbral de 15 unidades.',
+          }),
+    ]);
+
+    clearElement(analyticsRoot);
+    analyticsRoot.appendChild(kpiGrid);
+    analyticsRoot.appendChild(analyticsGrid);
+    analyticsRoot.appendChild(lowStockCard);
+  }
+
+  async function loadProductFormOptions() {
+    if (!prodCategorySelect && !prodBrandSelect) return;
+
+    const [categories, brands] = await Promise.all([
+      productService.fetchCategories(),
+      productService.fetchBrands(),
+    ]);
+
+    if (prodCategorySelect) {
+      clearElement(prodCategorySelect);
+      if (Array.isArray(categories) && categories.length > 0) {
+        for (const cat of categories) {
+          prodCategorySelect.appendChild(
+            createElement('option', {
+              text: cat.name || cat.id,
+              attrs: { value: cat.id },
+            })
+          );
+        }
+      } else {
+        prodCategorySelect.appendChild(
+          createElement('option', { text: 'Cuadernos y Libretas', attrs: { value: 'cuadernos' } })
+        );
+      }
+    }
+
+    if (prodBrandSelect) {
+      clearElement(prodBrandSelect);
+      prodBrandSelect.appendChild(
+        createElement('option', { text: 'Selecciona una marca...', attrs: { value: '' } })
+      );
+      if (Array.isArray(brands) && brands.length > 0) {
+        for (const brand of brands) {
+          const brandName = typeof brand === 'string' ? brand : brand.name || brand.id;
+          prodBrandSelect.appendChild(
+            createElement('option', {
+              text: brandName,
+              attrs: { value: brandName },
+            })
+          );
+        }
+      }
+    }
   }
 
   async function loadProducts() {
@@ -475,6 +704,7 @@ export async function initAdminController() {
       }
     }
 
+    if (tabKey === 'analytics') loadAnalytics();
     if (tabKey === 'products') loadProducts();
     if (tabKey === 'orders') loadOrders();
     if (tabKey === 'tickets') loadTickets();
@@ -483,10 +713,11 @@ export async function initAdminController() {
 
   for (const btn of tabButtons) {
     btn.addEventListener('click', () => {
-      switchTab(btn.dataset.tab || 'products');
+      switchTab(btn.dataset.tab || 'analytics');
     });
   }
 
+  if (refreshAnalyticsBtn) refreshAnalyticsBtn.addEventListener('click', loadAnalytics);
   if (refreshProductsBtn) refreshProductsBtn.addEventListener('click', loadProducts);
   if (refreshOrdersBtn) refreshOrdersBtn.addEventListener('click', loadOrders);
   if (refreshTicketsBtn) refreshTicketsBtn.addEventListener('click', loadTickets);
@@ -503,13 +734,32 @@ export async function initAdminController() {
       const categorySlug = String(data.get('categorySlug') || 'cuadernos');
       const price = Number(data.get('price'));
       const stockAvailable = Number(data.get('stockAvailable'));
-      const description = String(data.get('description') || '');
+      const unitLabel = String(data.get('unitLabel') || 'unidad').trim() || 'unidad';
+      const unitsPerPackRaw = Number(data.get('unitsPerPack'));
+      const unitsPerPack =
+        Number.isFinite(unitsPerPackRaw) && unitsPerPackRaw >= 1 ? Math.floor(unitsPerPackRaw) : 1;
+      const shortDescription = String(data.get('shortDescription') || '');
       const isActive = Boolean(data.get('isActive'));
+
+      const optionalAttrKeys = [
+        'ruling_type',
+        'sheet_count',
+        'paper_weight_gsm',
+        'education_level',
+      ];
+      const attributes = [];
+      for (const key of optionalAttrKeys) {
+        const val = String(data.get(key) || '').trim();
+        if (val) {
+          attributes.push({ key, value: val });
+        }
+      }
 
       if (
         !isRequired(sku) ||
         !isRequired(title) ||
         !isRequired(brandName) ||
+        !isRequired(categorySlug) ||
         !Number.isFinite(price) ||
         price <= 0 ||
         !Number.isFinite(stockAvailable) ||
@@ -517,7 +767,7 @@ export async function initAdminController() {
       ) {
         setSafeText(
           productError,
-          'Completa SKU, nombre, marca, precio mayor a 0 y stock válido.'
+          'Completa SKU, nombre, marca, categoría, precio mayor a 0 y stock válido.'
         );
         return;
       }
@@ -529,8 +779,11 @@ export async function initAdminController() {
         categorySlug,
         price,
         stockAvailable: Math.floor(stockAvailable),
-        description,
+        unitLabel,
+        unitsPerPack,
+        shortDescription,
         isActive,
+        attributes,
       });
 
       if (!res.success) {
@@ -548,6 +801,7 @@ export async function initAdminController() {
     if (restrictedView) restrictedView.classList.add('hidden');
     if (workspace) workspace.classList.remove('hidden');
     showDemoBannerIfNeeded(demoMode);
+    loadProductFormOptions();
     switchTab(activeTab);
   }
 
