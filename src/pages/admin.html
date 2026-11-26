@@ -61,11 +61,22 @@
 
           <div class="admin-tabs" role="tablist" aria-label="Secciones de administración">
             <button
-              id="tab-products"
+              id="tab-analytics"
               class="admin-tab"
               type="button"
               role="tab"
               aria-selected="true"
+              aria-controls="panel-analytics"
+              data-tab="analytics"
+            >
+              Resumen y Ventas
+            </button>
+            <button
+              id="tab-products"
+              class="admin-tab"
+              type="button"
+              role="tab"
+              aria-selected="false"
               aria-controls="panel-products"
               data-tab="products"
             >
@@ -106,7 +117,17 @@
             </button>
           </div>
 
-          <section id="panel-products" class="admin-panel" role="tabpanel" aria-labelledby="tab-products">
+          <section id="panel-analytics" class="admin-panel" role="tabpanel" aria-labelledby="tab-analytics">
+            <div class="admin-panel__header">
+              <h2>Resumen y Ventas</h2>
+              <button id="admin-refresh-analytics" class="btn btn--outline btn--sm" type="button">
+                Actualizar resumen
+              </button>
+            </div>
+            <div id="admin-analytics-root"></div>
+          </section>
+
+          <section id="panel-products" class="admin-panel hidden" role="tabpanel" aria-labelledby="tab-products">
             <div class="admin-panel__header">
               <h2>Productos e Inventario</h2>
               <button id="admin-refresh-products" class="btn btn--outline btn--sm" type="button">
@@ -127,19 +148,16 @@
                 </div>
                 <div class="form-group">
                   <label for="prod-brand" class="form-label">Marca</label>
-                  <input id="prod-brand" name="brandName" class="form-input" type="text" placeholder="Ej. Scribe" required>
+                  <select id="prod-brand" name="brandName" class="form-select" required>
+                    <option value="">Cargando marcas...</option>
+                  </select>
                 </div>
               </div>
               <div class="grid grid--3">
                 <div class="form-group">
                   <label for="prod-category" class="form-label">Categoría</label>
-                  <select id="prod-category" name="categorySlug" class="form-select">
-                    <option value="cuadernos">Cuadernos y Libretas</option>
-                    <option value="escritura">Escritura y Trazado</option>
-                    <option value="arte">Arte y Dibujo Técnico</option>
-                    <option value="mochilas">Mochilas y Estuches</option>
-                    <option value="tecnologia">Tecnología Escolar</option>
-                    <option value="listas">Paquetes Escolares</option>
+                  <select id="prod-category" name="categorySlug" class="form-select" required>
+                    <option value="">Cargando categorías...</option>
                   </select>
                 </div>
                 <div class="form-group">
@@ -151,10 +169,52 @@
                   <input id="prod-stock" name="stockAvailable" class="form-input" type="number" step="1" min="0" required>
                 </div>
               </div>
-              <div class="form-group">
-                <label for="prod-description" class="form-label">Descripción breve</label>
-                <textarea id="prod-description" name="description" class="form-textarea" rows="2" placeholder="Especificaciones técnicas o gramaje..."></textarea>
+              <div class="grid grid--2">
+                <div class="form-group">
+                  <label for="prod-unit-label" class="form-label">Unidad de venta</label>
+                  <input id="prod-unit-label" name="unitLabel" class="form-input" type="text" value="unidad" placeholder="Ej. unidad, caja x 12, paquete">
+                </div>
+                <div class="form-group">
+                  <label for="prod-units-per-pack" class="form-label">Unidades por empaque</label>
+                  <input id="prod-units-per-pack" name="unitsPerPack" class="form-input" type="number" step="1" min="1" value="1">
+                </div>
               </div>
+              <div class="form-group">
+                <label for="prod-short-description" class="form-label">Descripción breve</label>
+                <textarea id="prod-short-description" name="shortDescription" class="form-textarea" rows="2" placeholder="Especificaciones técnicas, presentación o gramaje..."></textarea>
+              </div>
+              <fieldset class="admin-fieldset">
+                <legend>Atributos técnicos opcionales (Cotizador de Listas Escolares)</legend>
+                <div class="grid grid--4">
+                  <div class="form-group">
+                    <label for="prod-attr-ruling" class="form-label">Tipo de rayado</label>
+                    <select id="prod-attr-ruling" name="ruling_type" class="form-select">
+                      <option value="">No aplica</option>
+                      <option value="raya">Raya</option>
+                      <option value="cuadro_grande">Cuadro grande</option>
+                      <option value="cuadro_chico">Cuadro chico</option>
+                      <option value="blanco">Blanco / Dibujo</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label for="prod-attr-sheets" class="form-label">Número de hojas</label>
+                    <input id="prod-attr-sheets" name="sheet_count" class="form-input" type="number" step="1" min="1" placeholder="Ej. 100">
+                  </div>
+                  <div class="form-group">
+                    <label for="prod-attr-gsm" class="form-label">Gramaje (g/m²)</label>
+                    <input id="prod-attr-gsm" name="paper_weight_gsm" class="form-input" type="number" step="1" min="40" placeholder="Ej. 75">
+                  </div>
+                  <div class="form-group">
+                    <label for="prod-attr-level" class="form-label">Nivel educativo</label>
+                    <select id="prod-attr-level" name="education_level" class="form-select">
+                      <option value="">Todos los niveles</option>
+                      <option value="primaria">Primaria</option>
+                      <option value="secundaria">Secundaria</option>
+                      <option value="universidad">Universidad / Bachillerato</option>
+                    </select>
+                  </div>
+                </div>
+              </fieldset>
               <div class="form-check">
                 <input id="prod-active" name="isActive" type="checkbox" checked>
                 <label for="prod-active">Producto activo en tienda</label>
