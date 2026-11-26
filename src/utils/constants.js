@@ -4,7 +4,7 @@
 
 export const API_BASE_URL =
   (typeof window !== 'undefined' && window.__API_BASE_URL__) ||
-  'http://localhost:3000/api/v1';
+  'https://libreria-estudio-backend-production.up.railway.app/api/v1';
 
 export const RESERVATION_MINUTES = 15;
 export const SEARCH_DEBOUNCE_MS = 300;

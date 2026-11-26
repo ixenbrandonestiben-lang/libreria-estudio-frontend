@@ -315,7 +315,7 @@ describe('API contracts, Navbar, and Cart regression', () => {
 
       const { productService } = await import('../src/services/productService.js');
       const res = await productService.getProducts({ sort: 'featured', level: 'Primaria', page: 1, limit: 8 });
-      assert.match(calledUrl, /http:\/\/localhost:3000\/api\/v1\/products/);
+      assert.match(calledUrl, /\/api\/v1\/products/);
       assert.match(calledUrl, /sort=newest/);
       assert.match(calledUrl, /education_level=primaria/);
       assert.equal(res.data.items.length, 1);
