@@ -264,6 +264,7 @@ export const productService = {
     if (res.success && Array.isArray(res.data) && res.data.length > 0) {
       return res.data.map((c) => ({
         id: c.slug,
+        numericId: Number(c.id),
         name: c.name,
         description: c.description || '',
         image: CATEGORY_FALLBACK_IMAGES[c.slug] || 'src/assets/images/products/cuaderno.svg',
@@ -275,7 +276,11 @@ export const productService = {
   async fetchBrands() {
     const res = await apiRequest('/products/brands');
     if (res.success && Array.isArray(res.data) && res.data.length > 0) {
-      return res.data.map((b) => ({ id: b.slug, name: b.name }));
+      return res.data.map((b) => ({
+        id: b.slug,
+        numericId: Number(b.id),
+        name: b.name,
+      }));
     }
     return this.getBrands().map((name) => ({ id: name, name }));
   },

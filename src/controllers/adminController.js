@@ -63,6 +63,28 @@ export async function initAdminController() {
   const productError = document.getElementById('admin-product-error');
   const prodCategorySelect = document.getElementById('prod-category');
   const prodBrandSelect = document.getElementById('prod-brand');
+  const prodTitleInput = document.getElementById('prod-title');
+  const prodSlugInput = document.getElementById('prod-slug');
+  let slugEditedManually = false;
+
+  const toSlug = (text) =>
+    String(text || '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '');
+
+  if (prodTitleInput && prodSlugInput) {
+    prodTitleInput.addEventListener('input', () => {
+      if (!slugEditedManually) {
+        prodSlugInput.value = toSlug(prodTitleInput.value);
+      }
+    });
+    prodSlugInput.addEventListener('input', () => {
+      slugEditedManually = prodSlugInput.value.trim().length > 0;
+    });
+  }
 
   const refreshAnalyticsBtn = document.getElementById('admin-refresh-analytics');
   const refreshProductsBtn = document.getElementById('admin-refresh-products');
@@ -304,10 +326,12 @@ export async function initAdminController() {
       clearElement(prodCategorySelect);
       if (Array.isArray(categories) && categories.length > 0) {
         for (const cat of categories) {
+          const attrs = { value: cat.id };
+          if (cat.numericId) attrs['data-numeric-id'] = String(cat.numericId);
           prodCategorySelect.appendChild(
             createElement('option', {
               text: cat.name || cat.id,
-              attrs: { value: cat.id },
+              attrs,
             })
           );
         }
@@ -326,10 +350,14 @@ export async function initAdminController() {
       if (Array.isArray(brands) && brands.length > 0) {
         for (const brand of brands) {
           const brandName = typeof brand === 'string' ? brand : brand.name || brand.id;
+          const attrs = { value: brandName };
+          if (typeof brand === 'object' && brand.numericId) {
+            attrs['data-numeric-id'] = String(brand.numericId);
+          }
           prodBrandSelect.appendChild(
             createElement('option', {
               text: brandName,
-              attrs: { value: brandName },
+              attrs,
             })
           );
         }
@@ -728,17 +756,22 @@ export async function initAdminController() {
       e.preventDefault();
       setSafeText(productError, '');
       const data = new FormData(createProductForm);
-      const sku = String(data.get('sku') || '');
-      const title = String(data.get('title') || '');
-      const brandName = String(data.get('brandName') || '');
-      const categorySlug = String(data.get('categorySlug') || 'cuadernos');
+      const sku = String(data.get('sku') || '').trim();
+      const title = String(data.get('title') || '').trim();
+      const slug = toSlug(data.get('slug') || title);
+      const brandName = String(data.get('brandName') || '').trim();
+      const categorySlug = String(data.get('categorySlug') || 'cuadernos').trim();
+      const selectedBrandOpt = prodBrandSelect?.selectedOptions?.[0];
+      const selectedCatOpt = prodCategorySelect?.selectedOptions?.[0];
+      const brandId = Number(selectedBrandOpt?.dataset?.numericId || 0);
+      const categoryId = Number(selectedCatOpt?.dataset?.numericId || 0);
       const price = Number(data.get('price'));
       const stockAvailable = Number(data.get('stockAvailable'));
       const unitLabel = String(data.get('unitLabel') || 'unidad').trim() || 'unidad';
       const unitsPerPackRaw = Number(data.get('unitsPerPack'));
       const unitsPerPack =
         Number.isFinite(unitsPerPackRaw) && unitsPerPackRaw >= 1 ? Math.floor(unitsPerPackRaw) : 1;
-      const shortDescription = String(data.get('shortDescription') || '');
+      const shortDescription = String(data.get('shortDescription') || '').trim();
       const isActive = Boolean(data.get('isActive'));
 
       const optionalAttrKeys = [
@@ -755,26 +788,29 @@ export async function initAdminController() {
         }
       }
 
-      if (
-        !isRequired(sku) ||
-        !isRequired(title) ||
-        !isRequired(brandName) ||
-        !isRequired(categorySlug) ||
-        !Number.isFinite(price) ||
-        price <= 0 ||
-        !Number.isFinite(stockAvailable) ||
-        stockAvailable < 0
-      ) {
-        setSafeText(
-          productError,
-          'Completa SKU, nombre, marca, categoría, precio mayor a 0 y stock válido.'
-        );
+      const localErrors = [];
+      if (!isRequired(sku) || sku.length < 2) localErrors.push('• SKU: obligatorio (mínimo 2 caracteres).');
+      if (!isRequired(title) || title.length < 2) localErrors.push('• Nombre del producto: obligatorio (mínimo 2 caracteres).');
+      if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) localErrors.push('• Slug: debe usar minúsculas, números y guiones (formato kebab-case).');
+      if (!isRequired(brandName)) localErrors.push('• Marca: selecciona una marca.');
+      if (!isRequired(categorySlug)) localErrors.push('• Categoría: selecciona una categoría.');
+      if (!Number.isFinite(price) || price <= 0) localErrors.push('• Precio: debe ser mayor a 0.');
+      if (!Number.isFinite(stockAvailable) || stockAvailable < 0) localErrors.push('• Stock inicial: debe ser 0 o mayor.');
+      if (!isRequired(shortDescription) || shortDescription.length < 2) {
+        localErrors.push('• Descripción breve: obligatoria (mínimo 2 caracteres).');
+      }
+
+      if (localErrors.length > 0) {
+        setSafeText(productError, `Revisa los siguientes campos:\n${localErrors.join('\n')}`);
         return;
       }
 
       const res = await adminService.createProduct({
         sku,
         title,
+        slug,
+        brandId: Number.isInteger(brandId) && brandId >= 1 ? brandId : undefined,
+        categoryId: Number.isInteger(categoryId) && categoryId >= 1 ? categoryId : undefined,
         brandName,
         categorySlug,
         price,
@@ -787,11 +823,17 @@ export async function initAdminController() {
       });
 
       if (!res.success) {
-        setSafeText(productError, res.message || 'No se pudo crear el producto.');
+        const details = Array.isArray(res.error?.details) ? res.error.details : [];
+        const detailLines = details.map((d) => `• ${d.field}: ${d.message}`).join('\n');
+        const msg = detailLines
+          ? `${res.message || 'Error de validación en los datos enviados'}\n${detailLines}`
+          : res.message || 'No se pudo crear el producto.';
+        setSafeText(productError, msg);
         return;
       }
 
       createProductForm.reset();
+      slugEditedManually = false;
       appStore.showToast('Producto creado correctamente.', 'success');
       await loadProducts();
     });

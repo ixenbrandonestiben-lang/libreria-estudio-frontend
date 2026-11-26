@@ -368,26 +368,40 @@ export const adminService = {
   },
 
   async createProduct(payload) {
+    const title = String(payload.title || payload.name || '').trim();
+    const toSlug = (text) =>
+      String(text || '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '');
+
+    const slug = toSlug(payload.slug || title);
     const shortDescription = String(payload.shortDescription ?? payload.description ?? '').trim();
     const unitsPerPack = Number(payload.unitsPerPack ?? payload.units_per_pack ?? 1);
     const attributes = Array.isArray(payload.attributes)
       ? payload.attributes.filter((a) => a && a.key && String(a.value || '').trim() !== '')
       : [];
 
+    const categoryId = Number(payload.categoryId);
+    const brandId = Number(payload.brandId);
+
     const body = {
       sku: String(payload.sku || '').trim(),
-      title: String(payload.title || payload.name || '').trim(),
-      brandName: String(payload.brandName || payload.brand || '').trim(),
-      categorySlug: String(payload.categorySlug || payload.category || 'cuadernos').trim(),
+      title,
+      slug,
       price: Number(payload.price),
       stockAvailable: Number(payload.stockAvailable ?? payload.stock ?? 0),
       unitLabel: String(payload.unitLabel || payload.unit_label || 'unidad').trim(),
       unitsPerPack: Number.isFinite(unitsPerPack) && unitsPerPack >= 1 ? Math.floor(unitsPerPack) : 1,
       shortDescription,
-      description: shortDescription,
       isActive: payload.isActive !== false,
       attributes,
     };
+
+    if (Number.isInteger(categoryId) && categoryId >= 1) body.categoryId = categoryId;
+    if (Number.isInteger(brandId) && brandId >= 1) body.brandId = brandId;
 
     const res = await apiRequest('/admin/products', {
       method: 'POST',
@@ -403,6 +417,8 @@ export const adminService = {
       const created = normalizeProduct({
         id: `prod-${Date.now().toString().slice(-4)}`,
         ...body,
+        brandName: String(payload.brandName || payload.brand || '').trim(),
+        categorySlug: String(payload.categorySlug || payload.category || 'cuadernos').trim(),
       });
       setStorageItem('admin_demo_products', [created, ...current]);
       return {

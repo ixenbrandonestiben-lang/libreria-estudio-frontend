@@ -531,6 +531,24 @@
   font-size: var(--text-xs);
   color: var(--color-danger);
   font-weight: 500;
+  white-space: pre-line;
+}
+
+.form-hint {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  line-height: 1.4;
+}
+
+.form-required {
+  color: var(--color-danger);
+  font-weight: 700;
+}
+
+.form-subtitle {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  margin-bottom: var(--space-4);
 }
 
 .form-check {

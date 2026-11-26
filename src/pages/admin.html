@@ -137,52 +137,77 @@
 
             <form id="admin-create-product-form" class="card" novalidate>
               <h3>Nuevo producto</h3>
+              <p class="form-subtitle">
+                Completa los campos marcados con <span class="form-required">*</span> (obligatorios). Los atributos técnicos son opcionales y ayudan al Cotizador de Listas Escolares.
+              </p>
+
               <div class="grid grid--3">
                 <div class="form-group">
-                  <label for="prod-sku" class="form-label">SKU</label>
-                  <input id="prod-sku" name="sku" class="form-input" type="text" placeholder="Ej. CUA-PRO-100" required>
+                  <label for="prod-sku" class="form-label">SKU <span class="form-required">*</span></label>
+                  <input id="prod-sku" name="sku" class="form-input" type="text" placeholder="Ej. LIBRO-LENGUA-500" maxlength="64" required>
+                  <small class="form-hint">Código único interno para identificar el producto en inventario (2 a 64 caracteres, sin espacios).</small>
                 </div>
                 <div class="form-group">
-                  <label for="prod-title" class="form-label">Nombre del producto</label>
-                  <input id="prod-title" name="title" class="form-input" type="text" placeholder="Ej. Cuaderno Profesional 100h" required>
+                  <label for="prod-title" class="form-label">Nombre del producto <span class="form-required">*</span></label>
+                  <input id="prod-title" name="title" class="form-input" type="text" placeholder="Ej. Libro Lengua y Comunicación 5°" maxlength="220" required>
+                  <small class="form-hint">Nombre público que verán los clientes en la tienda y en el carrito (2 a 220 caracteres).</small>
                 </div>
                 <div class="form-group">
-                  <label for="prod-brand" class="form-label">Marca</label>
+                  <label for="prod-slug" class="form-label">Slug (URL amigable) <span class="form-required">*</span></label>
+                  <input id="prod-slug" name="slug" class="form-input" type="text" placeholder="Ej. libro-lengua-comunicacion-5" maxlength="240" required>
+                  <small class="form-hint">Identificador único para la URL (solo minúsculas, números y guiones). Se genera solo desde el nombre.</small>
+                </div>
+              </div>
+
+              <div class="grid grid--2">
+                <div class="form-group">
+                  <label for="prod-brand" class="form-label">Marca <span class="form-required">*</span></label>
                   <select id="prod-brand" name="brandName" class="form-select" required>
                     <option value="">Cargando marcas...</option>
                   </select>
+                  <small class="form-hint">Editorial o fabricante registrado del producto.</small>
                 </div>
-              </div>
-              <div class="grid grid--3">
                 <div class="form-group">
-                  <label for="prod-category" class="form-label">Categoría</label>
+                  <label for="prod-category" class="form-label">Categoría <span class="form-required">*</span></label>
                   <select id="prod-category" name="categorySlug" class="form-select" required>
                     <option value="">Cargando categorías...</option>
                   </select>
-                </div>
-                <div class="form-group">
-                  <label for="prod-price" class="form-label">Precio (MXN)</label>
-                  <input id="prod-price" name="price" class="form-input" type="number" step="0.01" min="1" required>
-                </div>
-                <div class="form-group">
-                  <label for="prod-stock" class="form-label">Stock inicial</label>
-                  <input id="prod-stock" name="stockAvailable" class="form-input" type="number" step="1" min="0" required>
+                  <small class="form-hint">Sección principal del catálogo donde aparecerá este producto.</small>
                 </div>
               </div>
+
+              <div class="grid grid--2">
+                <div class="form-group">
+                  <label for="prod-price" class="form-label">Precio (MXN) <span class="form-required">*</span></label>
+                  <input id="prod-price" name="price" class="form-input" type="number" step="0.01" min="0.01" placeholder="Ej. 125.50" required>
+                  <small class="form-hint">Precio de venta al público en pesos mexicanos (mayor a 0, usa punto para decimales).</small>
+                </div>
+                <div class="form-group">
+                  <label for="prod-stock" class="form-label">Stock inicial <span class="form-required">*</span></label>
+                  <input id="prod-stock" name="stockAvailable" class="form-input" type="number" step="1" min="0" placeholder="Ej. 25" required>
+                  <small class="form-hint">Unidades físicas disponibles actualmente en almacén (número entero, 0 o mayor).</small>
+                </div>
+              </div>
+
               <div class="grid grid--2">
                 <div class="form-group">
                   <label for="prod-unit-label" class="form-label">Unidad de venta</label>
-                  <input id="prod-unit-label" name="unitLabel" class="form-input" type="text" value="unidad" placeholder="Ej. unidad, caja x 12, paquete">
+                  <input id="prod-unit-label" name="unitLabel" class="form-input" type="text" value="unidad" maxlength="60" placeholder="Ej. unidad, caja x 12, paquete">
+                  <small class="form-hint">Presentación en la que se vende este producto al cliente (ej. unidad, paquete, caja).</small>
                 </div>
                 <div class="form-group">
                   <label for="prod-units-per-pack" class="form-label">Unidades por empaque</label>
                   <input id="prod-units-per-pack" name="unitsPerPack" class="form-input" type="number" step="1" min="1" value="1">
+                  <small class="form-hint">Cantidad de piezas individuales incluidas en cada unidad de venta (ej. 1 para pieza suelta, 12 para caja).</small>
                 </div>
               </div>
+
               <div class="form-group">
-                <label for="prod-short-description" class="form-label">Descripción breve</label>
-                <textarea id="prod-short-description" name="shortDescription" class="form-textarea" rows="2" placeholder="Especificaciones técnicas, presentación o gramaje..."></textarea>
+                <label for="prod-short-description" class="form-label">Descripción breve <span class="form-required">*</span></label>
+                <textarea id="prod-short-description" name="shortDescription" class="form-textarea" rows="2" maxlength="500" placeholder="Ej. Libro de texto para primaria con ejercicios de lectura y redacción." required></textarea>
+                <small class="form-hint">Resumen claro de especificaciones, uso o grado escolar (obligatorio, 2 a 500 caracteres).</small>
               </div>
+
               <fieldset class="admin-fieldset">
                 <legend>Atributos técnicos opcionales (Cotizador de Listas Escolares)</legend>
                 <div class="grid grid--4">
@@ -195,14 +220,17 @@
                       <option value="cuadro_chico">Cuadro chico</option>
                       <option value="blanco">Blanco / Dibujo</option>
                     </select>
+                    <small class="form-hint">Solo para cuadernos; déjalo en «No aplica» para libros u otros artículos.</small>
                   </div>
                   <div class="form-group">
                     <label for="prod-attr-sheets" class="form-label">Número de hojas</label>
                     <input id="prod-attr-sheets" name="sheet_count" class="form-input" type="number" step="1" min="1" placeholder="Ej. 100">
+                    <small class="form-hint">Opcional. Total de hojas o páginas del cuaderno o libro.</small>
                   </div>
                   <div class="form-group">
                     <label for="prod-attr-gsm" class="form-label">Gramaje (g/m²)</label>
                     <input id="prod-attr-gsm" name="paper_weight_gsm" class="form-input" type="number" step="1" min="40" placeholder="Ej. 75">
+                    <small class="form-hint">Opcional. Grosor del papel (ej. 56, 75, 90 g/m²).</small>
                   </div>
                   <div class="form-group">
                     <label for="prod-attr-level" class="form-label">Nivel educativo</label>
@@ -212,12 +240,14 @@
                       <option value="secundaria">Secundaria</option>
                       <option value="universidad">Universidad / Bachillerato</option>
                     </select>
+                    <small class="form-hint">Etapa escolar recomendada para sugerir el producto en listas.</small>
                   </div>
                 </div>
               </fieldset>
+
               <div class="form-check">
                 <input id="prod-active" name="isActive" type="checkbox" checked>
-                <label for="prod-active">Producto activo en tienda</label>
+                <label for="prod-active">Producto activo en tienda (visible para los clientes inmediatamente)</label>
               </div>
               <p id="admin-product-error" class="form-error" role="alert"></p>
               <button class="btn btn--primary" type="submit">Crear producto</button>
