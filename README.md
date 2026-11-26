@@ -2,6 +2,8 @@
 
 Aplicación web modular para **Librería Estudio**, una tienda en línea especializada en útiles escolares, papelería técnica y paquetes por grado educativo. Está construida con **HTML5 semántico**, **CSS3 con tokens de diseño oficiales** y **JavaScript ES6+ nativo (`type="module"`)**, sin frameworks pesados ni pasos de compilación (*build*).
 
+> **Repositorio Backend relacionado:** [libreria-estudio-backend](https://github.com/ixenbrandonestiben-lang/libreria-estudio-backend) · **API en vivo (Railway):** https://libreria-estudio-backend-production.up.railway.app/api/v1/health
+
 ---
 
 ## Tabla de contenidos
